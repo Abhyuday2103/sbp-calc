@@ -1,2 +1,0 @@
-# sbp-calc
-cost calculator
