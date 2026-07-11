@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SBP Calc">
+<title>SBP Slab Calculator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
+body{
+  min-height:100%;background:#fffcf8;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
+  -webkit-font-smoothing:antialiased;color:#1a1714;
+  padding-bottom:calc(env(safe-area-inset-bottom) + 40px);
+  padding-top:env(safe-area-inset-top);
+}
+.app{max-width:480px;margin:0 auto;padding:0 20px 40px}
+
+/* header */
+.header{padding:48px 0 24px;display:flex;align-items:flex-end;justify-content:space-between}
+.header-sub{font-size:11px;color:#8a8078;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.header-title{font-size:32px;font-weight:400;line-height:1.1;font-family:Georgia,serif}
+.header-icon{width:44px;height:44px;background:#b8965a;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* tabs */
+.tabs{display:flex;background:#e8e0d5;border-radius:100px;padding:3px;margin-bottom:28px}
+.tab-btn{flex:1;border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:500;
+  padding:10px 1px;border-radius:100px;cursor:pointer;color:#8a8078;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.tab-btn.active{background:white;color:#1a1714;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+/* tab panels */
+.panel{display:none}.panel.active{display:block}
+
+/* section label */
+.sl{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8a8078;margin:24px 0 10px}
+
+/* card */
+.card{background:#fff;border-radius:20px;border:1px solid #e8e0d5;overflow:hidden}
+
+/* row */
+.row{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid #e8e0d5;gap:12px}
+.row:last-child{border-bottom:none}
+.row-label{font-size:15px;color:#1a1714;flex:1;font-weight:400}
+.row-sub{display:block;font-size:11px;color:#8a8078;margin-top:2px}
+.row-unit{font-size:13px;color:#8a8078;min-width:28px;flex-shrink:0}
+
+/* inputs */
+input[type=text],input[type=number]{
+  border:none;background:#f5f0eb;border-radius:10px;
+  padding:9px 12px;font-family:inherit;font-size:15px;
+  font-weight:500;color:#1a1714;outline:none;
+  -webkit-appearance:none;width:110px;text-align:right;
+}
+input[type=text].wide,input[type=number].wide{width:auto;flex:1;min-width:0}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+input:focus{box-shadow:0 0 0 2px #d4b07a}
+
+/* toggle */
+.toggle-wrap{position:relative;width:50px;height:28px;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.toggle-track{position:absolute;inset:0;background:#d3cec7;border-radius:100px;transition:background .25s}
+.toggle-thumb{position:absolute;width:22px;height:22px;background:white;border-radius:50%;top:3px;left:3px;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-wrap.on .toggle-track{background:#b8965a}
+.toggle-wrap.on .toggle-thumb{left:25px}
+
+/* mat grid */
+.mat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mat-card{border:1.5px solid #e8e0d5;background:white;border-radius:12px;padding:16px 14px;
+  cursor:pointer;text-align:left;width:100%;-webkit-tap-highlight-color:transparent;transition:all .2s}
+.mat-card.active{border-color:#b8965a;background:rgba(184,150,90,.08)}
+.mat-card .mat-icon{font-size:22px;margin-bottom:8px}
+.mat-card .mat-name{font-size:15px;font-weight:500;color:#1a1714}
+.mat-card.active .mat-name{color:#b8965a}
+.mat-card .mat-sub{font-size:12px;color:#8a8078;margin-top:2px}
+
+/* style grid */
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.style-card{border:1.5px solid #e8e0d5;background:white;border-radius:12px;padding:12px 8px;
+  cursor:pointer;text-align:center;width:100%;-webkit-tap-highlight-color:transparent;transition:all .2s}
+.style-card.active{border-color:#b8965a;background:rgba(184,150,90,.08)}
+.style-card .sc{font-size:18px;font-weight:600;color:#1a1714}
+.style-card.active .sc{color:#b8965a}
+.style-card .sn{font-size:11px;color:#8a8078;margin-top:2px}
+.style-card .ss{font-size:10px;color:#8a8078;margin-top:4px;line-height:1.4}
+
+/* info box */
+.info-box{background:#f5f0eb;border-radius:12px;padding:11px 15px;font-size:13px;color:#4a4540;margin-top:10px}
+
+/* fee chips */
+.fee-row{display:flex;gap:8px;padding-top:10px;width:100%}
+.fee-chip{flex:1;border:1.5px solid #e8e0d5;background:white;border-radius:12px;padding:11px 8px;
+  font-family:inherit;font-size:14px;font-weight:500;color:#8a8078;cursor:pointer;text-align:center;
+  -webkit-tap-highlight-color:transparent;transition:all .2s}
+.fee-chip.active{border-color:#b8965a;color:#b8965a;background:rgba(184,150,90,.08)}
+
+/* result dark panel */
+.result-panel{background:#1a1714;border-radius:20px;overflow:hidden;margin-top:28px}
+.result-top{padding:24px 22px 16px}
+.result-eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:6px}
+.result-amount{font-family:Georgia,serif;font-size:44px;color:white;line-height:1}
+.result-cur{font-family:inherit;font-size:22px;font-weight:300;vertical-align:top;margin-top:5px;display:inline-block;color:#d4b07a}
+.result-rows{padding:0 22px 20px}
+.result-row{display:flex;align-items:center;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.result-row:last-child{border-bottom:none}
+.result-row-label{flex:1;font-size:14px;color:rgba(255,255,255,.55)}
+.result-row-value{font-size:15px;font-weight:500;color:white}
+.result-row.grand .result-row-label{color:white;font-weight:500;font-size:14px}
+.result-row.grand .result-row-value{font-size:17px;font-weight:600}
+
+/* reverse result */
+.rev-panel{background:white;border:1px solid #e8e0d5;border-radius:20px;overflow:hidden;margin-top:28px}
+.rev-header{background:#b8965a;padding:20px 22px}
+.rev-eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:4px}
+.rev-amount{font-family:Georgia,serif;font-size:38px;color:white}
+.rev-sub{font-size:13px;color:rgba(255,255,255,.8);margin-top:4px}
+.rev-rows{padding:0 18px}
+.rev-row{display:flex;padding:13px 0;border-bottom:1px solid #e8e0d5}
+.rev-row:last-child{border-bottom:none}
+.rev-row-label{flex:1;font-size:14px;color:#8a8078}
+.rev-row-value{font-size:15px;font-weight:500;color:#1a1714}
+
+/* notes */
+textarea{width:100%;background:white;border:1px solid #e8e0d5;border-radius:20px;
+  padding:16px 18px;font-family:inherit;font-size:15px;color:#1a1714;
+  resize:none;outline:none;min-height:76px;display:block}
+textarea:focus{box-shadow:0 0 0 2px #d4b07a}
+
+/* action row */
+.action-row{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;border:none;border-radius:12px;padding:15px;font-family:inherit;
+  font-size:15px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-sm{width:52px;flex:none;font-size:18px;background:#e8e0d5;color:#4a4540}
+.btn-stone{background:#e8e0d5;color:#1a1714}
+.btn-gold{background:#b8965a;color:white}
+.btn-outline-gold{background:transparent;border:1.5px solid #b8965a;color:#b8965a;
+  width:100%;margin-top:10px;border-radius:12px;padding:15px;font-family:inherit;
+  font-size:15px;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+/* net final client header */
+.client-header{background:#1a1714;border-radius:16px;padding:18px 20px;
+  margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.client-eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:4px}
+.client-name{font-size:18px;font-weight:500;color:white}
+.client-name.empty{color:rgba(255,255,255,.3);font-style:italic;font-weight:400}
+.client-date{font-size:12px;color:rgba(255,255,255,.4);margin-top:3px}
+.so-number{font-size:12px;color:#d4b07a;font-weight:600;margin-top:6px;letter-spacing:.02em}
+.tax-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:6px;text-align:right}
+
+/* net items table */
+.net-table-header{display:grid;grid-template-columns:1fr 86px 32px 64px 26px;
+  gap:6px;padding:10px 14px;border-bottom:1px solid #e8e0d5;background:#f5f0eb}
+.net-col-head{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8a8078}
+.net-col-head.center{text-align:center}
+.net-item{display:grid;grid-template-columns:1fr 86px 32px 64px 26px;
+  gap:6px;padding:12px 14px;align-items:center;border-bottom:1px solid #e8e0d5}
+.net-item:last-child{border-bottom:none}
+.net-color{font-size:14px;font-weight:500;color:#1a1714}
+.net-line-total{font-size:11px;color:#8a8078;margin-top:2px}
+.net-dim{font-size:11px;color:#4a4540;line-height:1.4}
+.net-qty,.net-ppsf{font-size:13px;color:#4a4540;text-align:center}
+.net-remove{background:none;border:none;cursor:pointer;font-size:18px;color:#8a8078;
+  padding:0;text-align:center;-webkit-tap-highlight-color:transparent;line-height:1}
+
+/* totals dark */
+.totals-panel{background:#1a1714;border-radius:20px;overflow:hidden;margin-top:16px}
+.totals-rows{padding:20px 22px}
+.totals-row{display:flex;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.totals-row:last-child{border-bottom:none}
+.totals-label{flex:1;font-size:14px;color:rgba(255,255,255,.55)}
+.totals-value{font-size:15px;font-weight:500;color:white}
+.totals-row.grand .totals-label{color:white;font-weight:500}
+.totals-row.grand .totals-value{font-size:18px;font-weight:600}
+
+/* history */
+.h-item{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid #e8e0d5;gap:14px}
+.h-item:last-child{border-bottom:none}
+.h-dot{width:10px;height:10px;border-radius:50%;background:#b8965a;flex-shrink:0}
+.h-info{flex:1}
+.h-name{font-size:14px;font-weight:500;color:#1a1714}
+.h-meta{font-size:12px;color:#8a8078;margin-top:2px}
+.h-price{font-size:15px;font-weight:600;color:#b8965a}
+
+/* empty state */
+.empty{padding:32px 18px;text-align:center;color:#8a8078;font-size:14px;line-height:1.8}
+
+/* SO lookup */
+.search-box{width:100%;padding:14px 18px;border:1px solid #e8e0d5;border-radius:16px;
+  background:#fff;font-family:inherit;font-size:15px;color:#1a1714;outline:none;margin-bottom:20px}
+.search-box:focus{box-shadow:0 0 0 2px #d4b07a}
+.so-card{background:#fff;border:1px solid #e8e0d5;border-radius:16px;margin-bottom:10px;overflow:hidden}
+.so-card-row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;gap:12px}
+.so-card-id{font-size:15px;font-weight:600;color:#1a1714}
+.so-card-meta{font-size:12px;color:#8a8078;margin-top:2px}
+.so-card-total{font-size:16px;font-weight:600;color:#b8965a;flex-shrink:0}
+.so-card-detail{border-top:1px solid #e8e0d5;padding:14px 18px}
+.so-detail-item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;
+  border-bottom:1px solid #f5f0eb;font-size:13px;color:#1a1714}
+.so-detail-item:last-child{border-bottom:none}
+.so-detail-item span:first-child{flex:1}
+.so-detail-totals{margin-top:6px;padding-top:10px;border-top:1px solid #e8e0d5}
+.so-detail-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:#4a4540}
+.so-detail-row.grand{font-weight:600;color:#1a1714;font-size:14px;padding-top:6px}
+
+/* toast */
+#toast{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#1a1714;color:white;padding:12px 22px;border-radius:100px;
+  font-size:14px;font-weight:500;z-index:999;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .3s,transform .3s;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* hidden utility */
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="header-sub">Stone &amp; Quartz</div>
+      <div class="header-title">Calculator</div>
+    </div>
+    <div class="header-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+        <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 3l4-4 4 4-4 4-4-4z"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="quote">Quote</button>
+    <button class="tab-btn" data-tab="reverse">Reverse</button>
+    <button class="tab-btn" data-tab="history">History</button>
+    <button class="tab-btn" data-tab="netfinal">Net Final</button>
+    <button class="tab-btn" data-tab="lookup">Lookup</button>
+  </div>
+
+  <!-- ═══════════════════ QUOTE ═══════════════════ -->
+  <div id="panel-quote" class="panel active">
+
+    <div class="sl">Client &amp; date</div>
+    <div class="card">
+      <div class="row">
+        <div class="row-label">Client name<small class="row-sub">Appears on Net Final &amp; email</small></div>
+        <input id="q-client" class="wide" type="text" placeholder="e.g. John Smith">
+      </div>
+      <div class="row">
+        <div class="row-label">Quote date</div>
+        <input id="q-date" class="wide" type="text">
+      </div>
+    </div>
+
+    <div class="sl">Material type</div>
+    <div class="mat-grid">
+      <button class="mat-card active" data-mat="quartz" id="q-mat-quartz">
+        <div class="mat-icon">◈</div>
+        <div class="mat-name">Quartz</div>
+        <div class="mat-sub">Engineered stone</div>
+      </button>
+      <button class="mat-card" data-mat="natural" id="q-mat-natural">
+        <div class="mat-icon">◇</div>
+        <div class="mat-name">Natural Stone</div>
+        <div class="mat-sub">Marble, granite &amp; more</div>
+      </button>
+    </div>
+
+    <div id="q-quartz-section">
+      <div class="sl">Quartz style</div>
+      <div class="style-grid">
+        <button class="style-card active" data-style="SJ" id="qs-SJ">
+          <div class="sc">SJ</div><div class="sn">Super Jumbo</div><div class="ss">137" × 79.5"</div>
+        </button>
+        <button class="style-card" data-style="STD" id="qs-STD">
+          <div class="sc">STD</div><div class="sn">Standard</div><div class="ss">129" × 65"</div>
+        </button>
+        <button class="style-card" data-style="REG" id="qs-REG">
+          <div class="sc">REG</div><div class="sn">Regular</div><div class="ss">127" × 64"</div>
+        </button>
+      </div>
+      <div class="info-box" id="q-size-info">Size locked to 137" × 79.5" (Super Jumbo)</div>
+    </div>
+
+    <div id="q-natural-section" class="hidden">
+      <div class="sl">Slab dimensions</div>
+      <div class="card">
+        <div class="row">
+          <div class="row-label">Length<small class="row-sub">Per slab, inches</small></div>
+          <input id="q-length" type="number" inputmode="decimal" placeholder="0">
+          <span class="row-unit">in</span>
+        </div>
+        <div class="row">
+          <div class="row-label">Width<small class="row-sub">Per slab, inches</small></div>
+          <input id="q-width" type="number" inputmode="decimal" placeholder="0">
+          <span class="row-unit">in</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">Color name</div>
+    <div class="card">
+      <div class="row" style="flex-wrap:wrap">
+        <div style="display:flex;align-items:center;width:100%;gap:12px">
+          <div class="row-label">Color / product name<small class="row-sub">Required for Net Final</small></div>
+          <input id="q-color" class="wide" type="text" placeholder="e.g. Calacatta Gold">
+        </div>
+        <div class="hidden" id="q-lot-wrap" style="width:100%;padding-top:14px;margin-top:14px;border-top:1px solid #e8e0d5">
+          <div style="display:flex;align-items:center;width:100%;gap:12px">
+            <div class="row-label">Serial / lot number<small class="row-sub">Natural stone only</small></div>
+            <input id="q-lot" class="wide" type="text" placeholder="e.g. LOT-4521">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">Pricing</div>
+    <div class="card">
+      <div class="row">
+        <div class="row-label">Price per sqft<small class="row-sub">Before tax</small></div>
+        <span style="font-size:13px;color:#b8965a;margin-right:-4px;flex-shrink:0">$</span>
+        <input id="q-ppsf" type="number" inputmode="decimal" placeholder="0.00">
+        <span class="row-unit">/ ft²</span>
+      </div>
+      <div class="row">
+        <div class="row-label">Quantity</div>
+        <input id="q-qty" type="number" inputmode="numeric" placeholder="1" value="1">
+        <span class="row-unit">slabs</span>
+      </div>
+    </div>
+
+    <div class="sl">Extras &amp; fees</div>
+    <div class="card">
+      <div class="row">
+        <div class="row-label">Tax applicable<small class="row-sub">8% sales tax</small></div>
+        <div class="toggle-wrap" id="q-tax-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="row" id="q-delivery-row" style="flex-wrap:wrap">
+        <div style="display:flex;align-items:center;width:100%;gap:12px">
+          <div class="row-label">Delivery fee<small class="row-sub">Per slab</small></div>
+          <div class="toggle-wrap" id="q-del-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
+        </div>
+        <div class="fee-row hidden" id="q-fee-row">
+          <button class="fee-chip active" id="fee-50">$50 / slab</button>
+          <button class="fee-chip" id="fee-75">$75 / slab</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label">Online payment<small class="row-sub">2% transaction fee</small></div>
+        <div class="toggle-wrap" id="q-txn-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
+      </div>
+    </div>
+
+    <!-- Quote result -->
+    <div class="result-panel hidden" id="q-result">
+      <div class="result-top">
+        <div class="result-eyebrow">Grand Total</div>
+        <div class="result-amount"><span class="result-cur">$</span><span id="q-grand-display">0</span></div>
+      </div>
+      <div class="result-rows" id="q-result-rows"></div>
+    </div>
+
+    <div class="sl">Notes</div>
+    <textarea id="q-notes" placeholder="Project details, special instructions…" rows="3"></textarea>
+
+    <div class="action-row">
+      <button class="btn btn-sm" id="q-reset">↺</button>
+      <button class="btn btn-stone" id="q-copy">Copy</button>
+      <button class="btn btn-stone" id="q-save">Save</button>
+    </div>
+    <button class="btn-outline-gold" id="q-add-net">+ Add to Net Final</button>
+  </div>
+
+  <!-- ═══════════════════ REVERSE ═══════════════════ -->
+  <div id="panel-reverse" class="panel">
+
+    <div class="sl">Material type</div>
+    <div class="mat-grid">
+      <button class="mat-card active" id="r-mat-quartz">
+        <div class="mat-icon">◈</div><div class="mat-name">Quartz</div><div class="mat-sub">Engineered stone</div>
+      </button>
+      <button class="mat-card" id="r-mat-natural">
+        <div class="mat-icon">◇</div><div class="mat-name">Natural Stone</div><div class="mat-sub">Marble, granite &amp; more</div>
+      </button>
+    </div>
+
+    <div id="r-quartz-section">
+      <div class="sl">Quartz style</div>
+      <div class="style-grid">
+        <button class="style-card active" data-style="SJ" id="rs-SJ">
+          <div class="sc">SJ</div><div class="sn">Super Jumbo</div><div class="ss">137" × 79.5"</div>
+        </button>
+        <button class="style-card" data-style="STD" id="rs-STD">
+          <div class="sc">STD</div><div class="sn">Standard</div><div class="ss">129" × 65"</div>
+        </button>
+        <button class="style-card" data-style="REG" id="rs-REG">
+          <div class="sc">REG</div><div class="sn">Regular</div><div class="ss">127" × 64"</div>
+        </button>
+      </div>
+      <div class="info-box" id="r-size-info">Size locked to 137" × 79.5" (Super Jumbo)</div>
+    </div>
+
+    <div id="r-natural-section" class="hidden">
+      <div class="sl">Slab dimensions</div>
+      <div class="card">
+        <div class="row">
+          <div class="row-label">Length<small class="row-sub">Per slab, inches</small></div>
+          <input id="r-length" type="number" inputmode="decimal" placeholder="0">
+          <span class="row-unit">in</span>
+        </div>
+        <div class="row">
+          <div class="row-label">Width<small class="row-sub">Per slab, inches</small></div>
+          <input id="r-width" type="number" inputmode="decimal" placeholder="0">
+          <span class="row-unit">in</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">Known price</div>
+    <div class="card">
+      <div class="row">
+        <div class="row-label">Price per slab<small class="row-sub">What you know / paid</small></div>
+        <span style="font-size:13px;color:#b8965a;margin-right:-4px;flex-shrink:0">$</span>
+        <input id="r-price" type="number" inputmode="decimal" placeholder="0.00">
+      </div>
+      <div class="row">
+        <div class="row-label">Price includes tax?<small class="row-sub">8% will be backed out</small></div>
+        <div class="toggle-wrap" id="r-tax-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
+      </div>
+    </div>
+
+    <div class="rev-panel hidden" id="r-result">
+      <div class="rev-header">
+        <div class="rev-eyebrow">Price per sqft</div>
+        <div class="rev-amount">$<span id="r-ppsf-display">0.00</span></div>
+        <div class="rev-sub" id="r-sub-label"></div>
+      </div>
+      <div class="rev-rows" id="r-result-rows"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ HISTORY ═══════════════════ -->
+  <div id="panel-history" class="panel">
+    <div class="card" id="history-list">
+      <div class="empty">No saved quotes yet.<br>Calculate and tap "Save."</div>
+    </div>
+    <button class="btn btn-stone hidden" id="clear-history-btn" style="width:100%;margin-top:14px;border-radius:12px">Clear all history</button>
+  </div>
+
+  <!-- ═══════════════════ NET FINAL ═══════════════════ -->
+  <div id="panel-netfinal" class="panel">
+    <div class="client-header">
+      <div>
+        <div class="client-eyebrow">Client</div>
+        <div class="client-name empty" id="nf-client-display">No client set</div>
+        <div class="client-date" id="nf-date-display"></div>
+        <div class="so-number" id="nf-so-display">SO # —</div>
+      </div>
+      <div>
+        <div class="tax-label">Tax (8%)</div>
+        <div class="toggle-wrap" id="nf-tax-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
+      </div>
+    </div>
+
+    <div id="nf-empty" class="card">
+      <div class="empty">No items yet.<br>Go to Quote, enter a color name<br>and tap "+ Add to Net Final".</div>
+    </div>
+
+    <div id="nf-table" class="hidden">
+      <div class="card">
+        <div class="net-table-header">
+          <div class="net-col-head">Color</div>
+          <div class="net-col-head">Dimensions</div>
+          <div class="net-col-head center">Qty</div>
+          <div class="net-col-head center">$/ft²</div>
+          <div></div>
+        </div>
+        <div id="nf-items"></div>
+      </div>
+      <div class="totals-panel">
+        <div class="totals-rows">
+          <div class="totals-row" id="nf-row-subtotal">
+            <span class="totals-label">Subtotal (before tax)</span>
+            <span class="totals-value" id="nf-subtotal">$0.00</span>
+          </div>
+          <div class="totals-row hidden" id="nf-row-tax">
+            <span class="totals-label">Tax (8%)</span>
+            <span class="totals-value" id="nf-tax-amt">$0.00</span>
+          </div>
+          <div class="totals-row grand">
+            <span class="totals-label">Total</span>
+            <span class="totals-value" id="nf-total">$0.00</span>
+          </div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-stone" id="nf-clear">Clear all</button>
+        <button class="btn btn-gold" id="nf-email">✉ Send quote</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ SO LOOKUP ═══════════════════ -->
+  <div id="panel-lookup" class="panel">
+    <input id="lookup-search" class="search-box" type="text" placeholder="Search by SO # or client name…">
+
+    <div id="lookup-empty" class="card">
+      <div class="empty">No sales orders sent yet.<br>Orders are saved here automatically<br>when you tap "Send quote".</div>
+    </div>
+
+    <div id="lookup-list"></div>
+
+    <button class="btn btn-stone hidden" id="lookup-clear-btn" style="width:100%;margin-top:14px;border-radius:12px">Clear lookup history</button>
+  </div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+/* ── Constants ── */
+const STYLES = {
+  SJ:  { label:'Super Jumbo', w:137,   h:79.5 },
+  STD: { label:'Standard',   w:129,   h:65   },
+  REG: { label:'Regular',    w:127,   h:64   },
+};
+const money  = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const sqft   = n => n.toFixed(2) + ' ft²';
+const in2ft2 = (l,w) => (l*w)/144;
+const today  = () => new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+const $      = id => document.getElementById(id);
+const load   = key => { try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null} };
+const save   = (key,val) => localStorage.setItem(key, JSON.stringify(val));
+
+/* ── Serial number generator: SO-MMDDYY-## (daily counter) ── */
+function pad(n, len=2){ return String(n).padStart(len,'0'); }
+function dateStub(d){
+  return pad(d.getMonth()+1) + pad(d.getDate()) + pad(d.getFullYear()%100);
+}
+function generateSerial(){
+  const stub = dateStub(new Date());
+  let log = load('sbpSerialLog') || {date:'', count:0};
+  if(log.date !== stub) log = {date:stub, count:0};
+  log.count += 1;
+  save('sbpSerialLog', log);
+  return `SO-${stub}-${pad(log.count)}`;
+}
+
+/* ── State ── */
+let qMat      = 'quartz';
+let qStyle    = 'SJ';
+let qTax      = false;
+let qDel      = false;
+let qDelFee   = 50;
+let qTxn      = false;
+let rMat      = 'quartz';
+let rStyle    = 'SJ';
+let rTaxInc   = false;
+let nfTax     = false;
+let netItems  = load('sbpNF') || [];
+let history   = load('sbpH')  || [];
+let currentSO = load('sbpCurrentSO') || null;
+let soArchive = load('sbpSOArchive') || [];
+
+/* ── Toast ── */
+let toastTimer;
+function showToast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2300);
+}
+
+/* ── Init ── */
+$('q-date').value = today();
+
+/* ── Tabs ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    $('panel-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='netfinal'){ updateNFClientHeader(); renderNetFinal(); }
+    if(btn.dataset.tab==='history') renderHistory();
+    if(btn.dataset.tab==='lookup') renderLookup($('lookup-search').value.trim());
+  });
+});
+
+/* ── Toggle helper ── */
+function makeToggle(id, callback){
+  const el = $(id);
+  el.addEventListener('click', ()=>{
+    el.classList.toggle('on');
+    callback(el.classList.contains('on'));
+  });
+}
+
+/* ── Quote toggles ── */
+makeToggle('q-tax-toggle', v=>{ qTax=v; calcQuote(); });
+makeToggle('q-del-toggle', v=>{
+  qDel=v;
+  $('q-fee-row').classList.toggle('hidden',!v);
+  calcQuote();
+});
+makeToggle('q-txn-toggle', v=>{ qTxn=v; calcQuote(); });
+
+$('fee-50').addEventListener('click',()=>{
+  qDelFee=50;
+  $('fee-50').classList.add('active');
+  $('fee-75').classList.remove('active');
+  calcQuote();
+});
+$('fee-75').addEventListener('click',()=>{
+  qDelFee=75;
+  $('fee-75').classList.add('active');
+  $('fee-50').classList.remove('active');
+  calcQuote();
+});
+
+/* ── Quote material ── */
+document.querySelectorAll('#panel-quote .mat-card').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    qMat = btn.dataset.mat;
+    $('q-mat-quartz').classList.toggle('active', qMat==='quartz');
+    $('q-mat-natural').classList.toggle('active', qMat==='natural');
+    $('q-quartz-section').classList.toggle('hidden', qMat!=='quartz');
+    $('q-natural-section').classList.toggle('hidden', qMat!=='natural');
+    $('q-lot-wrap').classList.toggle('hidden', qMat!=='natural');
+    calcQuote();
+  });
+});
+
+/* ── Quote style ── */
+document.querySelectorAll('#q-quartz-section .style-card').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    qStyle = btn.dataset.style;
+    document.querySelectorAll('#q-quartz-section .style-card').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const s = STYLES[qStyle];
+    $('q-size-info').textContent = `Size locked to ${s.w}" × ${s.h}" (${s.label})`;
+    calcQuote();
+  });
+});
+
+/* ── Quote inputs ── */
+['q-ppsf','q-qty','q-length','q-width'].forEach(id=>{
+  $(id).addEventListener('input', calcQuote);
+});
+
+/* ── Reverse toggles ── */
+makeToggle('r-tax-toggle', v=>{ rTaxInc=v; calcReverse(); });
+
+document.querySelectorAll('#panel-reverse .mat-card').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    rMat = btn.id==='r-mat-quartz' ? 'quartz' : 'natural';
+    $('r-mat-quartz').classList.toggle('active', rMat==='quartz');
+    $('r-mat-natural').classList.toggle('active', rMat==='natural');
+    $('r-quartz-section').classList.toggle('hidden', rMat!=='quartz');
+    $('r-natural-section').classList.toggle('hidden', rMat!=='natural');
+    calcReverse();
+  });
+});
+
+document.querySelectorAll('#r-quartz-section .style-card').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    rStyle = btn.dataset.style;
+    document.querySelectorAll('#r-quartz-section .style-card').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const s = STYLES[rStyle];
+    $('r-size-info').textContent = `Size locked to ${s.w}" × ${s.h}" (${s.label})`;
+    calcReverse();
+  });
+});
+
+['r-price','r-length','r-width'].forEach(id=>$(id).addEventListener('input', calcReverse));
+
+/* ── Net Final tax toggle ── */
+makeToggle('nf-tax-toggle', v=>{ nfTax=v; renderNetFinal(); });
+
+/* ── Dims helpers ── */
+function getQDims(){
+  if(qMat==='quartz') return {l:STYLES[qStyle].w, h:STYLES[qStyle].h};
+  return {l:parseFloat($('q-length').value)||0, h:parseFloat($('q-width').value)||0};
+}
+function getRDims(){
+  if(rMat==='quartz') return {l:STYLES[rStyle].w, h:STYLES[rStyle].h};
+  return {l:parseFloat($('r-length').value)||0, h:parseFloat($('r-width').value)||0};
+}
+
+/* ── Quote calc ── */
+function calcQuote(){
+  const {l,h} = getQDims();
+  const ppsf  = parseFloat($('q-ppsf').value)||0;
+  const qty   = parseInt($('q-qty').value)||1;
+  if(!l||!h||!ppsf){ $('q-result').classList.add('hidden'); return; }
+
+  const areaSlab  = in2ft2(l,h);
+  const areaTotal = areaSlab*qty;
+  const preTax    = areaTotal*ppsf;
+  const taxAmt    = qTax ? preTax*0.08 : 0;
+  const withTax   = preTax+taxAmt;
+  const delAmt    = qDel ? qDelFee*qty : 0;
+  const withDel   = withTax+delAmt;
+  const txnAmt    = qTxn ? withDel*0.02 : 0;
+  const grand     = withDel+txnAmt;
+
+  $('q-grand-display').textContent = Math.round(grand).toLocaleString('en-US');
+
+  const rows = [
+    {l:'Area per slab',        v:sqft(areaSlab),   show:true},
+    {l:'Total area',           v:sqft(areaTotal),  show:true},
+    {l:'Price before tax',     v:money(preTax),    show:true},
+    {l:'Tax (8%)',             v:money(taxAmt),    show:qTax},
+    {l:'Price with tax',       v:money(withTax),   show:qTax},
+    {l:'Delivery fees',        v:money(delAmt),    show:qDel},
+    {l:'Price with delivery',  v:money(withDel),   show:qDel},
+    {l:'Transaction fee (2%)', v:money(txnAmt),    show:qTxn},
+  ].filter(r=>r.show);
+
+  $('q-result-rows').innerHTML = rows.map(r=>`
+    <div class="result-row">
+      <span class="result-row-label">${r.l}</span>
+      <span class="result-row-value">${r.v}</span>
+    </div>
+  `).join('') + `
+    <div class="result-row grand">
+      <span class="result-row-label">Grand total</span>
+      <span class="result-row-value">${money(grand)}</span>
+    </div>`;
+
+  $('q-result').classList.remove('hidden');
+
+  // store for copy/save
+  $('q-result').dataset.grand     = grand;
+  $('q-result').dataset.preTax    = preTax;
+  $('q-result').dataset.taxAmt    = taxAmt;
+  $('q-result').dataset.withTax   = withTax;
+  $('q-result').dataset.delAmt    = delAmt;
+  $('q-result').dataset.withDel   = withDel;
+  $('q-result').dataset.txnAmt    = txnAmt;
+}
+
+/* ── Reverse calc ── */
+function calcReverse(){
+  const {l,h} = getRDims();
+  const ps    = parseFloat($('r-price').value)||0;
+  if(!l||!h||!ps){ $('r-result').classList.add('hidden'); return; }
+
+  const area      = in2ft2(l,h);
+  const base      = rTaxInc ? ps/1.08 : ps;
+  const taxRemoved= rTaxInc ? ps-base : 0;
+  const ppsf      = base/area;
+
+  $('r-ppsf-display').textContent = ppsf.toFixed(2);
+  $('r-sub-label').textContent    = rMat==='quartz'
+    ? `Quartz ${rStyle} — ${STYLES[rStyle].w}"×${STYLES[rStyle].h}"`
+    : `Natural Stone — ${$('r-length').value||'?'}"×${$('r-width').value||'?'}"`;
+
+  let html = `
+    <div class="rev-row"><span class="rev-row-label">Slab area</span><span class="rev-row-value">${sqft(area)}</span></div>`;
+  if(rTaxInc) html += `
+    <div class="rev-row"><span class="rev-row-label">Tax removed (8%)</span><span class="rev-row-value">${money(taxRemoved)}</span></div>`;
+  html += `
+    <div class="rev-row"><span class="rev-row-label">Base price (excl. tax)</span><span class="rev-row-value">${money(base)}</span></div>
+    <div class="rev-row"><span class="rev-row-label">Price per sqft</span><span class="rev-row-value">${money(ppsf)} / ft²</span></div>`;
+
+  $('r-result-rows').innerHTML = html;
+  $('r-result').classList.remove('hidden');
+}
+
+/* ── Net Final ── */
+function updateNFClientHeader(){
+  const cn = $('q-client').value.trim();
+  const el = $('nf-client-display');
+  if(cn){ el.textContent=cn; el.classList.remove('empty'); }
+  else  { el.textContent='No client set'; el.classList.add('empty'); }
+  $('nf-date-display').textContent = $('q-date').value || today();
+  $('nf-so-display').textContent = currentSO ? `SO # ${currentSO}` : 'SO # —';
+}
+
+function renderNetFinal(){
+  const hasItems = netItems.length>0;
+  $('nf-empty').classList.toggle('hidden', hasItems);
+  $('nf-table').classList.toggle('hidden', !hasItems);
+  if(!hasItems) return;
+
+  const sub   = netItems.reduce((s,i)=>s+in2ft2(i.l,i.h)*i.qty*i.ppsf, 0);
+  const taxAmt= nfTax ? sub*0.08 : 0;
+  const total = sub+taxAmt;
+
+  $('nf-items').innerHTML = netItems.map(item=>{
+    const lineTotal = in2ft2(item.l,item.h)*item.qty*item.ppsf;
+    return `<div class="net-item" data-id="${item.id}">
+      <div><div class="net-color">${item.color}</div>${item.lot?`<div class="net-line-total" style="color:#8a8078">Lot: ${item.lot}</div>`:''}<div class="net-line-total">${money(lineTotal)}</div></div>
+      <div class="net-dim">${item.dimLabel}</div>
+      <div class="net-qty">${item.qty}</div>
+      <div class="net-ppsf">$${item.ppsf.toFixed(2)}</div>
+      <button class="net-remove" data-id="${item.id}">×</button>
+    </div>`;
+  }).join('');
+
+  // attach remove listeners fresh
+  document.querySelectorAll('.net-remove').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = parseInt(btn.dataset.id);
+      netItems = netItems.filter(i=>i.id!==id);
+      save('sbpNF', netItems);
+      renderNetFinal();
+    });
+  });
+
+  $('nf-subtotal').textContent = money(sub);
+  $('nf-row-tax').classList.toggle('hidden', !nfTax);
+  $('nf-tax-amt').textContent  = money(taxAmt);
+  $('nf-total').textContent    = money(total);
+}
+
+/* ── Add to Net Final ── */
+$('q-add-net').addEventListener('click',()=>{
+  const {l,h} = getQDims();
+  const color = $('q-color').value.trim();
+  const ppsf  = parseFloat($('q-ppsf').value)||0;
+  if(!color)      { showToast('Enter a color name first'); return; }
+  if(!l||!h||!ppsf){ showToast('Fill in dimensions and price first'); return; }
+  const dimLabel = qMat==='quartz'
+    ? `${STYLES[qStyle].w}"×${STYLES[qStyle].h}" (${qStyle})`
+    : `${l}"×${h}"`;
+  const lot = qMat==='natural' ? $('q-lot').value.trim() : '';
+  if(netItems.length===0 && !currentSO){
+    currentSO = generateSerial();
+    save('sbpCurrentSO', currentSO);
+  }
+  netItems.push({id:Date.now(), color, dimLabel, lot, l, h, qty:parseInt($('q-qty').value)||1, ppsf});
+  save('sbpNF', netItems);
+  updateNFClientHeader();
+  renderNetFinal();
+  showToast(`"${color}" added to ${currentSO} ✓`);
+});
+
+/* ── Save quote ── */
+$('q-save').addEventListener('click',()=>{
+  const {l,h} = getQDims();
+  const ppsf  = parseFloat($('q-ppsf').value)||0;
+  const panel = $('q-result');
+  if(!l||!h||!ppsf||panel.classList.contains('hidden')){ showToast('Fill in all fields first'); return; }
+  const entry = {
+    id:    Date.now(),
+    label: qMat==='quartz'?`Quartz ${qStyle}`:'Natural Stone',
+    l, h,
+    qty:   $('q-qty').value||'1',
+    ppsf:  ppsf,
+    client:$('q-client').value.trim(),
+    notes: $('q-notes').value.trim(),
+    grand: Math.round(parseFloat(panel.dataset.grand)).toLocaleString('en-US'),
+    date:  new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+  };
+  history.unshift(entry);
+  save('sbpH', history);
+  showToast('Saved ✓');
+});
+
+/* ── Copy quote ── */
+$('q-copy').addEventListener('click',()=>{
+  const panel = $('q-result');
+  if(panel.classList.contains('hidden')){ showToast('Nothing to copy yet'); return; }
+  const {l,h} = getQDims();
+  const mat   = qMat==='quartz'?`Quartz ${qStyle} (${l}"×${h}")`:`Natural Stone (${l}"×${h}")`;
+  const client= $('q-client').value.trim();
+  const lines = [
+    'Slab Quote','──────────────────────',
+    client?`Client: ${client}`:'',
+    `Date: ${$('q-date').value||today()}`,
+    `Color: ${$('q-color').value||'—'}`,
+    qMat==='natural' && $('q-lot').value.trim() ? `Lot/Serial: ${$('q-lot').value.trim()}` : '',
+    `Material: ${mat}`,
+    `Qty: ${$('q-qty').value||1} slab(s)`,
+    `Price/sqft: $${$('q-ppsf').value}`,'',
+    `Price before tax:   ${money(parseFloat(panel.dataset.preTax))}`,
+  ].filter(Boolean);
+  if(qTax){lines.push(`Tax (8%):           ${money(parseFloat(panel.dataset.taxAmt))}`);lines.push(`Price with tax:     ${money(parseFloat(panel.dataset.withTax))}`);}
+  if(qDel){lines.push(`Delivery:           ${money(parseFloat(panel.dataset.delAmt))}`);lines.push(`With delivery:      ${money(parseFloat(panel.dataset.withDel))}`);}
+  if(qTxn) lines.push(`Transaction (2%):   ${money(parseFloat(panel.dataset.txnAmt))}`);
+  lines.push('',`GRAND TOTAL:        $${Math.round(parseFloat(panel.dataset.grand)).toLocaleString('en-US')}`);
+  const notes=$('q-notes').value.trim();
+  if(notes) lines.push('',`Notes: ${notes}`);
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>showToast('Copied ✓')).catch(()=>showToast('Copy not supported'));
+});
+
+/* ── Reset quote ── */
+$('q-reset').addEventListener('click',()=>{
+  $('q-color').value='';$('q-length').value='';$('q-width').value='';
+  $('q-lot').value='';
+  $('q-ppsf').value='';$('q-qty').value='1';$('q-notes').value='';
+  if(qTax){qTax=false;$('q-tax-toggle').classList.remove('on');}
+  if(qDel){qDel=false;$('q-del-toggle').classList.remove('on');$('q-fee-row').classList.add('hidden');}
+  if(qTxn){qTxn=false;$('q-txn-toggle').classList.remove('on');}
+  $('q-result').classList.add('hidden');
+  showToast('Cleared');
+});
+
+/* ── Email Net Final ── */
+$('nf-email').addEventListener('click',()=>{
+  if(!netItems.length){ showToast('No items to send'); return; }
+  if(!currentSO){ currentSO = generateSerial(); save('sbpCurrentSO', currentSO); updateNFClientHeader(); }
+  const client  = $('q-client').value.trim()||'Client';
+  const date    = $('q-date').value||today();
+  const subject = `Sales Order ${currentSO} — ${client} — ${date}`;
+  const sub     = netItems.reduce((s,i)=>s+in2ft2(i.l,i.h)*i.qty*i.ppsf,0);
+  const taxAmt  = nfTax?sub*0.08:0;
+  const total   = sub+taxAmt;
+  const lines   = [`SO #: ${currentSO}`,`Client: ${client}`,`Date: ${date}`,``,`SALES ORDER`,`─────────────────────────────────────`];
+  netItems.forEach((item,i)=>{
+    const lt=in2ft2(item.l,item.h)*item.qty*item.ppsf;
+    lines.push(``,`${i+1}. ${item.color}`);
+    if(item.lot) lines.push(`   Lot/Serial : ${item.lot}`);
+    lines.push(
+      `   Dimensions : ${item.dimLabel}`,
+      `   Quantity   : ${item.qty} slab${item.qty>1?'s':''}`,
+      `   Price/ft²  : $${item.ppsf.toFixed(2)}`,
+      `   Line total : ${money(lt)}`);
+  });
+  lines.push(``,`─────────────────────────────────────`,`Subtotal (before tax) : ${money(sub)}`);
+  if(nfTax) lines.push(`Tax (8%)              : ${money(taxAmt)}`);
+  lines.push(`TOTAL                 : ${money(total)}`,``,`─────────────────────────────────────`,`Sent from SBP Slab Calculator`);
+
+  // archive this order for SO Lookup
+  soArchive.unshift({
+    so: currentSO,
+    client,
+    date,
+    items: JSON.parse(JSON.stringify(netItems)),
+    subtotal: sub,
+    taxApplied: nfTax,
+    taxAmt,
+    total,
+    sentAt: Date.now()
+  });
+  save('sbpSOArchive', soArchive);
+
+  window.location.href=`mailto:Abhi@pacsurfaces.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
+  showToast('Opening Mail…');
+});
+
+/* ── Clear Net Final ── */
+$('nf-clear').addEventListener('click',()=>{
+  netItems=[];save('sbpNF',[]);
+  currentSO=null; localStorage.removeItem('sbpCurrentSO');
+  renderNetFinal();
+  updateNFClientHeader();
+  showToast('Cleared');
+});
+
+/* ── History ── */
+function renderHistory(){
+  const list = $('history-list');
+  const btn  = $('clear-history-btn');
+  if(!history.length){
+    list.innerHTML='<div class="empty">No saved quotes yet.<br>Calculate and tap "Save."</div>';
+    btn.classList.add('hidden');
+    return;
+  }
+  btn.classList.remove('hidden');
+  list.innerHTML = history.map((h,i)=>`
+    <div class="h-item" style="${i===history.length-1?'border-bottom:none':''}">
+      <div class="h-dot"></div>
+      <div class="h-info">
+        <div class="h-name">${h.client?h.client+' — ':''}${h.label} · ${h.qty} slab${h.qty>1?'s':''}</div>
+        <div class="h-meta">${h.date}${h.notes?' · '+h.notes.slice(0,28):''}</div>
+      </div>
+      <div class="h-price">$${h.grand}</div>
+    </div>`).join('');
+}
+
+$('clear-history-btn').addEventListener('click',()=>{
+  history=[];save('sbpH',[]);renderHistory();showToast('Cleared');
+});
+
+/* ── SO Lookup ── */
+function renderLookup(filter){
+  const emptyEl  = $('lookup-empty');
+  const list     = $('lookup-list');
+  const clearBtn = $('lookup-clear-btn');
+
+  if(soArchive.length===0){
+    emptyEl.classList.remove('hidden');
+    list.innerHTML='';
+    clearBtn.classList.add('hidden');
+    return;
+  }
+  emptyEl.classList.add('hidden');
+  clearBtn.classList.remove('hidden');
+
+  const f = (filter||'').toLowerCase();
+  const filtered = f
+    ? soArchive.filter(o => o.so.toLowerCase().includes(f) || (o.client||'').toLowerCase().includes(f))
+    : soArchive;
+
+  if(filtered.length===0){
+    list.innerHTML = `<div class="card"><div class="empty">No matching orders found.</div></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(o=>{
+    const itemsHtml = o.items.map(it=>`
+      <div class="so-detail-item">
+        <span>${it.color} <span style="color:#8a8078">(${it.dimLabel} · Qty ${it.qty} · $${it.ppsf.toFixed(2)}/ft²${it.lot?` · Lot ${it.lot}`:''})</span></span>
+        <span>${money(in2ft2(it.l,it.h)*it.qty*it.ppsf)}</span>
+      </div>`).join('');
+    return `
+    <div class="so-card">
+      <div class="so-card-row">
+        <div>
+          <div class="so-card-id">${o.so}</div>
+          <div class="so-card-meta">${o.client||'—'} · ${o.date} · ${o.items.length} item${o.items.length>1?'s':''}</div>
+        </div>
+        <div class="so-card-total">${money(o.total)}</div>
+      </div>
+      <div class="so-card-detail hidden">
+        ${itemsHtml}
+        <div class="so-detail-totals">
+          <div class="so-detail-row"><span>Subtotal</span><span>${money(o.subtotal)}</span></div>
+          ${o.taxApplied?`<div class="so-detail-row"><span>Tax (8%)</span><span>${money(o.taxAmt)}</span></div>`:''}
+          <div class="so-detail-row grand"><span>Total</span><span>${money(o.total)}</span></div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-gold so-resend" data-so="${o.so}">✉ Resend email</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function resendOrder(soNum){
+  const order = soArchive.find(o=>o.so===soNum);
+  if(!order) return;
+  const subject = `Sales Order ${order.so} — ${order.client||'Client'} — ${order.date}`;
+  const lines = [`SO #: ${order.so}`,`Client: ${order.client||'Client'}`,`Date: ${order.date}`,``,`SALES ORDER`,`─────────────────────────────────────`];
+  order.items.forEach((item,i)=>{
+    const lt=in2ft2(item.l,item.h)*item.qty*item.ppsf;
+    lines.push(``,`${i+1}. ${item.color}`);
+    if(item.lot) lines.push(`   Lot/Serial : ${item.lot}`);
+    lines.push(
+      `   Dimensions : ${item.dimLabel}`,
+      `   Quantity   : ${item.qty} slab${item.qty>1?'s':''}`,
+      `   Price/ft²  : $${item.ppsf.toFixed(2)}`,
+      `   Line total : ${money(lt)}`);
+  });
+  lines.push(``,`─────────────────────────────────────`,`Subtotal (before tax) : ${money(order.subtotal)}`);
+  if(order.taxApplied) lines.push(`Tax (8%)              : ${money(order.taxAmt)}`);
+  lines.push(`TOTAL                 : ${money(order.total)}`,``,`─────────────────────────────────────`,`Sent from SBP Slab Calculator`);
+  window.location.href=`mailto:Abhi@pacsurfaces.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
+  showToast('Opening Mail…');
+}
+
+$('lookup-search').addEventListener('input', ()=>{
+  renderLookup($('lookup-search').value.trim());
+});
+
+$('lookup-list').addEventListener('click', (e)=>{
+  const resendBtn = e.target.closest('.so-resend');
+  if(resendBtn){ resendOrder(resendBtn.dataset.so); return; }
+  const row = e.target.closest('.so-card-row');
+  if(row){
+    const detail = row.closest('.so-card').querySelector('.so-card-detail');
+    detail.classList.toggle('hidden');
+  }
+});
+
+$('lookup-clear-btn').addEventListener('click', ()=>{
+  soArchive=[]; save('sbpSOArchive', []);
+  renderLookup('');
+  showToast('Lookup history cleared');
+});
+
+/* ── Boot ── */
+renderHistory();
+renderNetFinal();
+updateNFClientHeader();
+</script>
+</body>
+</html>
