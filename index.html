@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SBP Calc">
@@ -308,16 +309,77 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
     <div class="sl">Color name</div>
     <div class="card">
       <div class="row" style="flex-wrap:wrap">
-        <div style="display:flex;align-items:center;width:100%;gap:12px">
+        <div style="display:flex;align-items:center;width:100%;gap:12px;position:relative">
           <div class="row-label">Color / product name<small class="row-sub">Required for Net Final</small></div>
-          <input id="q-color" class="wide" type="text" placeholder="e.g. Calacatta Gold">
+          <input id="q-color" class="wide" type="text" placeholder="e.g. Calacatta Gold" autocomplete="off">
         </div>
+        <div id="q-color-list" class="hidden" style="width:100%;margin-top:10px;max-height:210px;overflow-y:auto;border:1px solid #e8e0d5;border-radius:12px"></div>
+
         <div class="hidden" id="q-lot-wrap" style="width:100%;padding-top:14px;margin-top:14px;border-top:1px solid #e8e0d5">
           <div style="display:flex;align-items:center;width:100%;gap:12px">
             <div class="row-label">Serial / lot number<small class="row-sub">Natural stone only</small></div>
             <input id="q-lot" class="wide" type="text" placeholder="e.g. LOT-4521">
           </div>
         </div>
+
+        <!-- Natural stone: paste photo link -->
+        <div id="q-photo-wrap" style="width:100%;padding-top:14px;margin-top:14px;border-top:1px solid #e8e0d5">
+          <div style="display:flex;align-items:center;width:100%;gap:12px">
+            <div class="row-label">Slab photo<small class="row-sub">Paste image link from live inventory</small></div>
+            <input id="q-photo" class="wide" type="text" placeholder="Paste link…">
+          </div>
+          <div id="q-photo-preview" class="hidden" style="margin-top:12px">
+            <img id="q-photo-img" style="width:100%;border-radius:12px;display:block;background:#f5f0eb" alt="Slab preview">
+            <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+              <div id="q-photo-meta" style="flex:1;font-size:12px;color:#8a8078;line-height:1.5"></div>
+              <button id="q-photo-clear" style="border:none;background:#e8e0d5;color:#4a4540;border-radius:8px;padding:7px 12px;font-family:inherit;font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent">Remove</button>
+            </div>
+          </div>
+          <div id="q-photo-error" class="hidden" style="margin-top:10px;font-size:12px;color:#a33;line-height:1.5"></div>
+        </div>
+
+        <!-- Quartz: attach stock images -->
+        <div id="q-stock-wrap" class="hidden" style="width:100%;padding-top:14px;margin-top:14px;border-top:1px solid #e8e0d5">
+          <div style="display:flex;align-items:center;width:100%;gap:12px">
+            <div class="row-label">Attach image?<small class="row-sub">Full slab &amp; close-up</small></div>
+            <div class="toggle-wrap" id="q-stock-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
+          </div>
+          <div id="q-stock-preview" class="hidden" style="margin-top:12px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div>
+                <img id="q-stock-full" style="width:100%;border-radius:10px;display:block;background:#f5f0eb;aspect-ratio:4/3;object-fit:cover" alt="Full slab">
+                <div style="font-size:11px;color:#8a8078;margin-top:5px;text-align:center">Full slab</div>
+              </div>
+              <div>
+                <img id="q-stock-close" style="width:100%;border-radius:10px;display:block;background:#f5f0eb;aspect-ratio:4/3;object-fit:cover" alt="Close up">
+                <div style="font-size:11px;color:#8a8078;margin-top:5px;text-align:center">Close-up</div>
+              </div>
+            </div>
+          </div>
+          <div id="q-stock-msg" class="hidden" style="margin-top:10px;font-size:12px;color:#a33;line-height:1.5"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">Finish &amp; thickness</div>
+    <div class="card">
+      <div class="row" style="flex-wrap:wrap">
+        <div class="row-label" style="width:100%">Material finish</div>
+        <div id="q-finish-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;padding-top:10px">
+          <button class="fee-chip active" data-finish="Polished">Polished</button>
+          <button class="fee-chip" data-finish="Brushed">Brushed</button>
+          <button class="fee-chip" data-finish="Honed">Honed</button>
+          <button class="fee-chip" data-finish="Dual">Dual</button>
+        </div>
+      </div>
+      <div class="row" style="flex-wrap:wrap">
+        <div class="row-label" style="width:100%">Thickness</div>
+        <div id="q-thick-row" style="display:flex;gap:6px;width:100%;padding-top:10px">
+          <button class="fee-chip hidden" data-thick="1.5CM">1.5 CM</button>
+          <button class="fee-chip" data-thick="2CM">2 CM</button>
+          <button class="fee-chip active" data-thick="3CM">3 CM</button>
+        </div>
+        <div id="q-thick-note" class="hidden" style="width:100%;font-size:11px;color:#8a8078;padding-top:8px">1.5 CM available for this color</div>
       </div>
     </div>
 
@@ -524,6 +586,110 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
 <div id="toast"></div>
 
 <script>
+/* ═══════════════════════════════════════════════════════════════
+   ▼▼▼  QUARTZ PROGRAM COLORS  ▼▼▼
+
+   n = name        g = price group
+   c = available combos, written as  SIZE:THICKNESS
+   f = finishes, ONLY if the color differs from the default.
+       Omit = Polished.
+   d = true if discontinued / limited edition
+
+   Everything here is a HELPER, never a restriction. Any name can be
+   typed by hand, any size/thickness combo can be chosen. Mismatches
+   show a soft note, they never block the quote.
+
+   IMAGE FILENAMES ARE AUTOMATIC — lowercase the name, swap spaces
+   for hyphens, drop punctuation, then add -full.jpg / -close.jpg
+     "Calacatta Gold"  ->  img/calacatta-gold-full.jpg
+                           img/calacatta-gold-close.jpg
+   Upload files with those names to an  img  folder and they appear.
+   Type  slabFiles()  in the browser console to print the full list.
+   ═══════════════════════════════════════════════════════════════ */
+
+const QUARTZ_COLORS = [
+  /* Group 0 */
+  { n:"Arva White",         g:0, c:["SJ:2CM","SJ:3CM","STD:1.5CM"] },
+  { n:"Carrara Verna",      g:0, c:["STD:2CM","STD:3CM"] },
+  { n:"Classic Gray",       g:0, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Pebbles Ice",        g:0, c:["SJ:2CM","SJ:3CM","STD:3CM","STD:1.5CM"] },
+  { n:"White Blizzard",     g:0, c:["SJ:2CM","SJ:3CM"] },
+
+  /* Group 1 */
+  { n:"Antique Gray",       g:1, c:["STD:3CM"] },
+  { n:"Carrara Cloud",      g:1, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Carrara Royale",     g:1, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Carrara Venatino",   g:1, c:["SJ:3CM"] },
+  { n:"Pacific Sicilia",    g:1, c:["STD:2CM","STD:3CM"] },
+  { n:"Star Cluster",       g:1, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Toffee Lite",        g:1, c:["STD:3CM"] },
+
+  /* Group 2 */
+  { n:"Bear Hug",           g:2, c:["STD:3CM"] },
+  { n:"Calacatta Lugano",   g:2, c:["STD:3CM"] },
+  { n:"Dior White",         g:2, c:["STD:3CM"] },
+  { n:"Heart Of Gold",      g:2, c:["STD:3CM"] },
+  { n:"Super White",        g:2, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Warm & Fuzzy",       g:2, c:["STD:3CM"] },
+
+  /* Group 3 */
+  { n:"Calacatta Miracle",  g:3, c:["STD:3CM"] },
+  { n:"Omega White",        g:3, c:["STD:3CM"] },
+  { n:"Sky's The Limit",    g:3, c:["STD:3CM"] },
+
+  /* Group 4 */
+  { n:"Alabaster",          g:4, c:["SJ:3CM"] },
+  { n:"Caterina",           g:4, c:["SJ:3CM"] },
+
+  /* Group 5 */
+  { n:"Perfectly Fabulous", g:5, c:["REG:3CM"] },
+  { n:"Blanca Storm",       g:5, c:["SJ:3CM"] },
+  { n:"Calacatta Plazo Lite", g:5, c:["REG:2CM","REG:3CM"] },
+  { n:"Larger Than Life",   g:5, c:["REG:3CM"] },
+
+  /* Group 6 */
+  { n:"Calacatta Gold",     g:6, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Coastal Tide",       g:6, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Fern",               g:6, c:["SJ:3CM"] },
+  { n:"Iris Grey",          g:6, c:["SJ:3CM"] },
+  { n:"Alabaster Noir",     g:6, c:["SJ:3CM"] },
+  { n:"Winter Fresh Concrete Finish",   g:6, c:["REG:3CM"], f:["Brushed"] },
+  { n:"Pacific Gravitas Concrete Finish", g:6, c:["REG:3CM"], f:["Brushed"] },
+
+  /* Group 7 */
+  { n:"Aureate",            g:7, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Banyan",             g:7, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Bellagio",           g:7, c:["SJ:3CM"] },
+  { n:"Costa",              g:7, c:["SJ:3CM"] },
+  { n:"Honeydew",           g:7, c:["SJ:2CM","SJ:3CM"] },
+  { n:"Ikos",               g:7, c:["SJ:3CM"], f:["Honed"] },
+
+  /* Group 8 */
+  { n:"French Vanilla",     g:8, c:["SJ:3CM"] },
+  { n:"Driftwood",          g:8, c:["SJ:3CM"] },
+  { n:"Larvik",             g:8, c:["SJ:3CM"] },
+  { n:"Ruskin",             g:8, c:["SJ:3CM"] },
+  { n:"Venus Glow",         g:8, c:["SJ:3CM"] },
+  { n:"Taj Vein",           g:8, c:["SJ:3CM"], f:["Polished","Brushed"] },
+];
+
+/* ▲▲▲  END OF COLOR LIST  ▲▲▲ */
+
+function slug(s){
+  return s.toLowerCase().replace(/&/g,'').replace(/['’]/g,'')
+          .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+function colorImages(c){
+  const s = slug(c.n);
+  return { full:`img/${s}-full.jpg`, close:`img/${s}-close.jpg` };
+}
+function slabFiles(){
+  console.log(QUARTZ_COLORS.map(c=>{
+    const i=colorImages(c); return i.full+'\n'+i.close;
+  }).join('\n'));
+}
+
+
 /* ── Constants ── */
 const STYLES = {
   SJ:  { label:'Super Jumbo', w:137,   h:79.5 },
@@ -567,6 +733,10 @@ let netItems  = load('sbpNF') || [];
 let history   = load('sbpH')  || [];
 let currentSO = load('sbpCurrentSO') || null;
 let soArchive = load('sbpSOArchive') || [];
+let qFinish   = 'Polished';
+let qThick    = '3CM';
+let qStockOn  = false;
+let qStockColor = null;
 
 /* ── Toast ── */
 let toastTimer;
@@ -634,6 +804,13 @@ document.querySelectorAll('#panel-quote .mat-card').forEach(btn=>{
     $('q-quartz-section').classList.toggle('hidden', qMat!=='quartz');
     $('q-natural-section').classList.toggle('hidden', qMat!=='natural');
     $('q-lot-wrap').classList.toggle('hidden', qMat!=='natural');
+    $('q-photo-wrap').classList.toggle('hidden', qMat!=='natural');
+    $('q-stock-wrap').classList.toggle('hidden', qMat!=='quartz');
+    $('q-color-list').classList.add('hidden');
+    $('q-color').placeholder = qMat==='quartz' ? 'Type or pick a color…' : 'e.g. Taj Mahal';
+    refreshThickness();
+    refreshNotes();
+    refreshStock();
     calcQuote();
   });
 });
@@ -646,6 +823,7 @@ document.querySelectorAll('#q-quartz-section .style-card').forEach(btn=>{
     btn.classList.add('active');
     const s = STYLES[qStyle];
     $('q-size-info').textContent = `Size locked to ${s.w}" × ${s.h}" (${s.label})`;
+    refreshNotes();
     calcQuote();
   });
 });
@@ -798,8 +976,18 @@ function renderNetFinal(){
 
   $('nf-items').innerHTML = netItems.map(item=>{
     const lineTotal = in2ft2(item.l,item.h)*item.qty*item.ppsf;
+    const spec = [item.finish, item.thick].filter(Boolean).join(' · ');
     return `<div class="net-item" data-id="${item.id}">
-      <div><div class="net-color">${item.color}</div>${item.lot?`<div class="net-line-total" style="color:#8a8078">Lot: ${item.lot}</div>`:''}<div class="net-line-total">${money(lineTotal)}</div></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        ${item.photo?`<img src="${item.photo}" style="width:44px;height:32px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#f5f0eb" onerror="if(this.src.endsWith('.jpg')){this.src=this.src.replace(/\\.jpg$/,'.png')}else{this.style.display='none'}">`:''}
+        ${item.photo2?`<img src="${item.photo2}" style="width:30px;height:32px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#f5f0eb" onerror="if(this.src.endsWith('.jpg')){this.src=this.src.replace(/\\.jpg$/,'.png')}else{this.style.display='none'}">`:''}
+        <div style="min-width:0">
+          <div class="net-color">${item.color}</div>
+          ${spec?`<div class="net-line-total" style="color:#8a8078">${spec}</div>`:''}
+          ${item.lot?`<div class="net-line-total" style="color:#8a8078">Lot: ${item.lot}</div>`:''}
+          <div class="net-line-total">${money(lineTotal)}</div>
+        </div>
+      </div>
       <div class="net-dim">${item.dimLabel}</div>
       <div class="net-qty">${item.qty}</div>
       <div class="net-ppsf">$${item.ppsf.toFixed(2)}</div>
@@ -823,6 +1011,312 @@ function renderNetFinal(){
   $('nf-total').textContent    = money(total);
 }
 
+/* ── Slab photo: parse + preview ── */
+const S3_BASE = 'https://s3.us-east-1.amazonaws.com/pgusa-sps-files/';
+
+function parseSlabLink(raw){
+  let s = (raw||'').trim();
+  if(!s) return null;
+  s = s.replace(/^["']|["']$/g,'');
+
+  let url = null, file = s;
+  if(/^https?:\/\//i.test(s)){
+    url = s;
+    try { file = decodeURIComponent(new URL(s).pathname.split('/').pop()||''); }
+    catch(e){ file = s.split('/').pop().split('?')[0]; }
+  } else if(/\.(jpe?g|png|webp)$/i.test(s)){
+    file = s;
+    url  = S3_BASE + encodeURIComponent(s);
+  } else {
+    return null;
+  }
+
+  if(!/\.(jpe?g|png|webp)$/i.test(file)) return null;
+
+  const stem  = file.replace(/\.(jpe?g|png|webp)$/i,'');
+  const block  = (stem.match(/Block[_-]?([A-Za-z0-9]+)/i)  || [])[1] || '';
+  const bundle = (stem.match(/Bundle[_-]?([A-Za-z0-9]+)/i) || [])[1] || '';
+
+  let name = '';
+  const m = stem.match(/^SBP[_-](.+?)[_-](?:Block|BLOCK)/i);
+  if(m){
+    name = m[1]
+      .replace(/[_-]+/g,' ')
+      .replace(/(\d+(?:\.\d+)?)\s*cm/ig,' $1cm')
+      .replace(/([a-z])([A-Z])/g,'$1 $2')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+  return { url, file, block, bundle, name };
+}
+
+let qPhoto = null;
+
+function renderPhoto(){
+  const prev = $('q-photo-preview'), err = $('q-photo-error');
+  if(!qPhoto){ prev.classList.add('hidden'); return; }
+  $('q-photo-img').src = qPhoto.url;
+  const bits = [];
+  if(qPhoto.block)  bits.push('Block ' + qPhoto.block);
+  if(qPhoto.bundle) bits.push('Bundle ' + qPhoto.bundle);
+  $('q-photo-meta').textContent = bits.length ? bits.join(' · ') : 'Photo attached';
+  prev.classList.remove('hidden');
+  err.classList.add('hidden');
+}
+
+function handlePhotoInput(){
+  const raw = $('q-photo').value.trim();
+  const err = $('q-photo-error');
+  if(!raw){ qPhoto=null; $('q-photo-preview').classList.add('hidden'); err.classList.add('hidden'); return; }
+
+  const p = parseSlabLink(raw);
+  if(!p){
+    qPhoto = null;
+    $('q-photo-preview').classList.add('hidden');
+    err.textContent = "That doesn't look like an image link. Right-click the slab photo in live inventory and choose Copy Image Address.";
+    err.classList.remove('hidden');
+    return;
+  }
+  qPhoto = p;
+  renderPhoto();
+
+  // auto-fill lot field for natural stone if empty
+  if(qMat==='natural' && !$('q-lot').value.trim() && (p.block||p.bundle)){
+    const parts=[];
+    if(p.block)  parts.push('Block ' + p.block);
+    if(p.bundle) parts.push('Bundle ' + p.bundle);
+    $('q-lot').value = parts.join(' / ');
+    showToast('Lot number filled from photo');
+  }
+  // suggest color name if empty
+  if(!$('q-color').value.trim() && p.name){
+    $('q-color').value = p.name;
+  }
+}
+
+$('q-photo').addEventListener('input', handlePhotoInput);
+$('q-photo').addEventListener('paste', ()=>setTimeout(handlePhotoInput,0));
+$('q-photo-img').addEventListener('error', ()=>{
+  $('q-photo-preview').classList.add('hidden');
+  const err=$('q-photo-error');
+  err.textContent = "Couldn't load that image. Check the link opens in a browser tab.";
+  err.classList.remove('hidden');
+});
+$('q-photo-clear').addEventListener('click', ()=>{
+  qPhoto=null; $('q-photo').value='';
+  $('q-photo-preview').classList.add('hidden');
+  $('q-photo-error').classList.add('hidden');
+});
+
+function findQuartzColor(nameRaw){
+  let n = (nameRaw||'').trim().toLowerCase();
+  if(!n) return null;
+  n = n.replace(/\s*(super jumbo|sj|standard|std|regular|reg)\s*$/i,'').trim();
+  n = n.replace(/\s*\d+(\.\d+)?\s*cm\s*$/i,'').trim();
+  return QUARTZ_COLORS.find(c=>c.n.toLowerCase()===n) || null;
+}
+
+function comboList(c){ return c ? c.c : []; }
+function sizesFor(c){ return [...new Set(comboList(c).map(x=>x.split(':')[0]))]; }
+function thicksFor(c,size){
+  const all = comboList(c).filter(x=>!size || x.split(':')[0]===size);
+  return [...new Set(all.map(x=>x.split(':')[1]))];
+}
+function comboOK(c,size,thick){
+  if(!c) return true;
+  return comboList(c).includes(size+':'+thick);
+}
+function finishesFor(c){ return (c && c.f) ? c.f : ['Polished']; }
+
+/* human-readable summary, e.g. "Group 0 · SJ 2/3CM · STD 1.5CM · Polished" */
+function colorSummary(c){
+  if(!c) return '';
+  const bySize = {};
+  comboList(c).forEach(x=>{
+    const [s,t] = x.split(':');
+    (bySize[s] = bySize[s] || []).push(t.replace('CM',''));
+  });
+  const parts = Object.entries(bySize).map(([s,ts])=>`${s} ${ts.join('/')}CM`);
+  let out = `Group ${c.g} · ${parts.join(' · ')} · ${finishesFor(c).join('/')}`;
+  if(c.d) out += ' · discontinued';
+  return out;
+}
+
+/* ── Finish chips ── */
+document.querySelectorAll('#q-finish-row .fee-chip').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    qFinish = btn.dataset.finish;
+    document.querySelectorAll('#q-finish-row .fee-chip').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    refreshNotes();
+  });
+});
+function setFinish(f){
+  qFinish=f;
+  document.querySelectorAll('#q-finish-row .fee-chip').forEach(b=>b.classList.toggle('active', b.dataset.finish===f));
+}
+
+/* ── Thickness chips ── */
+document.querySelectorAll('#q-thick-row .fee-chip').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    qThick = btn.dataset.thick;
+    document.querySelectorAll('#q-thick-row .fee-chip').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    refreshNotes();
+  });
+});
+function setThick(t){
+  qThick=t;
+  document.querySelectorAll('#q-thick-row .fee-chip').forEach(b=>b.classList.toggle('active', b.dataset.thick===t));
+}
+
+/* 1.5CM chip visible when the color offers it, or when color is unknown */
+function refreshThickness(){
+  const c = qMat==='quartz' ? findQuartzColor($('q-color').value) : null;
+  const show = !c || thicksFor(c).includes('1.5CM');
+  document.querySelector('#q-thick-row [data-thick="1.5CM"]').classList.toggle('hidden', !show);
+  $('q-thick-note').classList.add('hidden');
+}
+
+/* soft advisory line — never blocks */
+function refreshNotes(){
+  const note = $('q-thick-note');
+  const c = qMat==='quartz' ? findQuartzColor($('q-color').value) : null;
+  if(!c){ note.classList.add('hidden'); return; }
+
+  const msgs = [colorSummary(c)];
+  if(!comboOK(c, qStyle, qThick)){
+    msgs.push(`⚠ ${c.n} isn't normally offered in ${qStyle} ${qThick} — continuing anyway.`);
+  }
+  const allowed = finishesFor(c);
+  if(!allowed.includes(qFinish)){
+    msgs.push(`⚠ ${c.n} normally comes in ${allowed.join(' or ')} only.`);
+  }
+  note.innerHTML = msgs.join('<br>');
+  note.style.color = msgs.length>1 ? '#a3752d' : '#8a8078';
+  note.classList.remove('hidden');
+}
+
+/* when a known color is picked, snap to its defaults */
+function applyColorDefaults(c){
+  if(!c) return;
+  const sizes = sizesFor(c);
+  if(sizes.length===1 && sizes[0]!==qStyle){
+    qStyle = sizes[0];
+    document.querySelectorAll('#q-quartz-section .style-card').forEach(b=>b.classList.toggle('active', b.dataset.style===qStyle));
+    const s=STYLES[qStyle];
+    $('q-size-info').textContent = `Size locked to ${s.w}" × ${s.h}" (${s.label})`;
+  }
+  const ths = thicksFor(c, qStyle);
+  if(ths.length && !ths.includes(qThick)) setThick(ths.includes('3CM') ? '3CM' : ths[0]);
+  const fin = finishesFor(c);
+  if(!fin.includes(qFinish)) setFinish(fin[0]);
+  calcQuote();
+}
+
+/* ── Quartz color searchable dropdown ── */
+function renderColorList(){
+  const box = $('q-color-list');
+  if(qMat!=='quartz'){ box.classList.add('hidden'); return; }
+  let term = $('q-color').value.trim().toLowerCase()
+             .replace(/\s*(super jumbo|sj|standard|std|regular|reg)\s*$/i,'').trim();
+  const hits = QUARTZ_COLORS.filter(c=>c.n.toLowerCase().includes(term));
+
+  if(!hits.length || (hits.length===1 && hits[0].n.toLowerCase()===term)){
+    box.classList.add('hidden'); return;
+  }
+  box.innerHTML = hits.map(c=>`
+    <div class="color-opt" data-name="${c.n.replace(/"/g,'&quot;')}"
+         style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f0eb;-webkit-tap-highlight-color:transparent">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="flex:1;font-size:14px;color:#1a1714">${c.n}</span>
+        <span style="font-size:10px;color:#8a8078;border:1px solid #e8e0d5;border-radius:4px;padding:2px 5px">G${c.g}</span>
+        ${c.d?'<span style="font-size:10px;color:#a3752d">disc</span>':''}
+      </div>
+      <div style="font-size:11px;color:#8a8078;margin-top:3px">${colorSummary(c).replace(/^Group \d+ · /,'')}</div>
+    </div>`).join('');
+  box.classList.remove('hidden');
+}
+
+$('q-color-list').addEventListener('click', e=>{
+  const opt = e.target.closest('.color-opt');
+  if(!opt) return;
+  $('q-color').value = opt.dataset.name;
+  $('q-color-list').classList.add('hidden');
+  const c = findQuartzColor(opt.dataset.name);
+  refreshThickness();
+  applyColorDefaults(c);
+  refreshNotes();
+  refreshStock();
+});
+
+$('q-color').addEventListener('input', ()=>{
+  renderColorList(); refreshThickness(); refreshNotes(); refreshStock();
+});
+$('q-color').addEventListener('focus', renderColorList);
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#q-color') && !e.target.closest('#q-color-list')){
+    $('q-color-list').classList.add('hidden');
+  }
+});
+
+/* ── Quartz stock images ── */
+makeToggle('q-stock-toggle', v=>{ qStockOn=v; refreshStock(); });
+
+function refreshStock(){
+  const prev = $('q-stock-preview'), msg = $('q-stock-msg');
+  qStockColor = null;
+  if(qMat!=='quartz' || !qStockOn){ prev.classList.add('hidden'); msg.classList.add('hidden'); return; }
+
+  const c = findQuartzColor($('q-color').value);
+  if(!c){
+    prev.classList.add('hidden');
+    msg.style.color='#8a8078';
+    msg.textContent = 'Pick a program color from the list to attach its images.';
+    msg.classList.remove('hidden');
+    return;
+  }
+  const imgs = colorImages(c);
+  qStockColor = { n:c.n, full:imgs.full, close:imgs.close };
+  $('q-stock-full').src  = imgs.full;
+  $('q-stock-close').src = imgs.close;
+  prev.classList.remove('hidden');
+  msg.classList.add('hidden');
+}
+
+/* if the stock photos aren't uploaded yet, say so plainly.
+   .jpg is tried first, then .png, before giving up. */
+let stockFails = 0;
+['q-stock-full','q-stock-close'].forEach(id=>{
+  $(id).addEventListener('error', ()=>{
+    const el = $(id);
+    if(el.src.endsWith('.jpg')){ el.src = el.src.replace(/\.jpg$/,'.png'); return; }
+    stockFails++;
+    if(stockFails>=2 && qStockColor){
+      $('q-stock-preview').classList.add('hidden');
+      const m=$('q-stock-msg');
+      m.style.color='#8a8078';
+      m.textContent = `No photos uploaded for ${qStockColor.n} yet.`;
+      m.classList.remove('hidden');
+      qStockColor = null;
+    }
+  });
+  $(id).addEventListener('load', ()=>{
+    stockFails=0;
+    if(qStockColor){
+      if(id==='q-stock-full')  qStockColor.full  = $(id).src;
+      if(id==='q-stock-close') qStockColor.close = $(id).src;
+    }
+  });
+});
+
+/* absolute URL for email links */
+function absUrl(p){
+  if(!p) return '';
+  if(/^https?:\/\//i.test(p)) return p;
+  return new URL(p, window.location.href).href;
+}
+
 /* ── Add to Net Final ── */
 $('q-add-net').addEventListener('click',()=>{
   const {l,h} = getQDims();
@@ -834,11 +1328,20 @@ $('q-add-net').addEventListener('click',()=>{
     ? `${STYLES[qStyle].w}"×${STYLES[qStyle].h}" (${qStyle})`
     : `${l}"×${h}"`;
   const lot = qMat==='natural' ? $('q-lot').value.trim() : '';
+  let photo='', photo2='';
+  if(qMat==='natural'){
+    photo = qPhoto ? qPhoto.url : '';
+  } else if(qStockOn && qStockColor){
+    photo  = absUrl(qStockColor.full);
+    photo2 = absUrl(qStockColor.close);
+  }
   if(netItems.length===0 && !currentSO){
     currentSO = generateSerial();
     save('sbpCurrentSO', currentSO);
   }
-  netItems.push({id:Date.now(), color, dimLabel, lot, l, h, qty:parseInt($('q-qty').value)||1, ppsf});
+  netItems.push({id:Date.now(), color, dimLabel, lot, photo, photo2,
+                 finish:qFinish, thick:qThick,
+                 l, h, qty:parseInt($('q-qty').value)||1, ppsf});
   save('sbpNF', netItems);
   updateNFClientHeader();
   renderNetFinal();
@@ -879,6 +1382,7 @@ $('q-copy').addEventListener('click',()=>{
     client?`Client: ${client}`:'',
     `Date: ${$('q-date').value||today()}`,
     `Color: ${$('q-color').value||'—'}`,
+    `Finish: ${qFinish} / ${qThick}`,
     qMat==='natural' && $('q-lot').value.trim() ? `Lot/Serial: ${$('q-lot').value.trim()}` : '',
     `Material: ${mat}`,
     `Qty: ${$('q-qty').value||1} slab(s)`,
@@ -898,6 +1402,18 @@ $('q-copy').addEventListener('click',()=>{
 $('q-reset').addEventListener('click',()=>{
   $('q-color').value='';$('q-length').value='';$('q-width').value='';
   $('q-lot').value='';
+  $('q-photo').value='';qPhoto=null;
+  $('q-photo-preview').classList.add('hidden');
+  $('q-photo-error').classList.add('hidden');
+  if(qStockOn){ qStockOn=false; $('q-stock-toggle').classList.remove('on'); }
+  qStockColor=null;
+  $('q-stock-preview').classList.add('hidden');
+  $('q-stock-msg').classList.add('hidden');
+  $('q-color-list').classList.add('hidden');
+  qFinish='Polished'; setFinish('Polished');
+  qThick='3CM'; setThick('3CM');
+  refreshThickness();
+  refreshNotes();
   $('q-ppsf').value='';$('q-qty').value='1';$('q-notes').value='';
   if(qTax){qTax=false;$('q-tax-toggle').classList.remove('on');}
   if(qDel){qDel=false;$('q-del-toggle').classList.remove('on');$('q-fee-row').classList.add('hidden');}
@@ -920,12 +1436,15 @@ $('nf-email').addEventListener('click',()=>{
   netItems.forEach((item,i)=>{
     const lt=in2ft2(item.l,item.h)*item.qty*item.ppsf;
     lines.push(``,`${i+1}. ${item.color}`);
+    if(item.finish||item.thick) lines.push(`   Finish     : ${[item.finish,item.thick].filter(Boolean).join(' / ')}`);
     if(item.lot) lines.push(`   Lot/Serial : ${item.lot}`);
     lines.push(
       `   Dimensions : ${item.dimLabel}`,
       `   Quantity   : ${item.qty} slab${item.qty>1?'s':''}`,
       `   Price/ft²  : $${item.ppsf.toFixed(2)}`,
       `   Line total : ${money(lt)}`);
+    if(item.photo)  lines.push(`   Slab photo : ${item.photo}`);
+    if(item.photo2) lines.push(`   Close-up   : ${item.photo2}`);
   });
   lines.push(``,`─────────────────────────────────────`,`Subtotal (before tax) : ${money(sub)}`);
   if(nfTax) lines.push(`Tax (8%)              : ${money(taxAmt)}`);
@@ -1011,7 +1530,11 @@ function renderLookup(filter){
   list.innerHTML = filtered.map(o=>{
     const itemsHtml = o.items.map(it=>`
       <div class="so-detail-item">
-        <span>${it.color} <span style="color:#8a8078">(${it.dimLabel} · Qty ${it.qty} · $${it.ppsf.toFixed(2)}/ft²${it.lot?` · Lot ${it.lot}`:''})</span></span>
+        <span style="display:flex;gap:8px;align-items:center">
+          ${it.photo?`<img src="${it.photo}" style="width:36px;height:26px;object-fit:cover;border-radius:5px;flex-shrink:0;background:#f5f0eb" onerror="this.style.display='none'">`:''}
+          ${it.photo2?`<img src="${it.photo2}" style="width:24px;height:26px;object-fit:cover;border-radius:5px;flex-shrink:0;background:#f5f0eb" onerror="this.style.display='none'">`:''}
+          <span>${it.color} <span style="color:#8a8078">(${[it.finish,it.thick].filter(Boolean).join(' ')}${it.finish||it.thick?' · ':''}${it.dimLabel} · Qty ${it.qty} · $${it.ppsf.toFixed(2)}/ft²${it.lot?` · Lot ${it.lot}`:''})</span></span>
+        </span>
         <span>${money(in2ft2(it.l,it.h)*it.qty*it.ppsf)}</span>
       </div>`).join('');
     return `
@@ -1046,12 +1569,15 @@ function resendOrder(soNum){
   order.items.forEach((item,i)=>{
     const lt=in2ft2(item.l,item.h)*item.qty*item.ppsf;
     lines.push(``,`${i+1}. ${item.color}`);
+    if(item.finish||item.thick) lines.push(`   Finish     : ${[item.finish,item.thick].filter(Boolean).join(' / ')}`);
     if(item.lot) lines.push(`   Lot/Serial : ${item.lot}`);
     lines.push(
       `   Dimensions : ${item.dimLabel}`,
       `   Quantity   : ${item.qty} slab${item.qty>1?'s':''}`,
       `   Price/ft²  : $${item.ppsf.toFixed(2)}`,
       `   Line total : ${money(lt)}`);
+    if(item.photo)  lines.push(`   Slab photo : ${item.photo}`);
+    if(item.photo2) lines.push(`   Close-up   : ${item.photo2}`);
   });
   lines.push(``,`─────────────────────────────────────`,`Subtotal (before tax) : ${money(order.subtotal)}`);
   if(order.taxApplied) lines.push(`Tax (8%)              : ${money(order.taxAmt)}`);
@@ -1081,6 +1607,10 @@ $('lookup-clear-btn').addEventListener('click', ()=>{
 });
 
 /* ── Boot ── */
+$('q-photo-wrap').classList.toggle('hidden', qMat!=='natural');
+$('q-stock-wrap').classList.toggle('hidden', qMat!=='quartz');
+$('q-color').placeholder = qMat==='quartz' ? 'Type or pick a color…' : 'e.g. Taj Mahal';
+refreshThickness();
 renderHistory();
 renderNetFinal();
 updateNFClientHeader();
