@@ -385,8 +385,23 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
 
     <div class="sl">Pricing</div>
     <div class="card">
+      <div class="row" style="flex-wrap:wrap">
+        <div class="row-label" style="width:100%">Order type</div>
+        <div id="q-ful-row" style="display:flex;gap:6px;width:100%;padding-top:10px">
+          <button class="fee-chip active" data-ful="delivery">Delivery</button>
+          <button class="fee-chip" data-ful="pickup">Pickup</button>
+        </div>
+      </div>
+      <div class="row" style="flex-wrap:wrap">
+        <div class="row-label" style="width:100%">Rate<small class="row-sub">Set by order type, tap to override</small></div>
+        <div id="q-rate-row" style="display:flex;gap:6px;width:100%;padding-top:10px">
+          <button class="fee-chip active" data-rate="single">Single</button>
+          <button class="fee-chip" data-rate="bundle">Bundle</button>
+        </div>
+        <div id="q-rate-note" class="hidden" style="width:100%;font-size:11px;color:#8a8078;padding-top:8px"></div>
+      </div>
       <div class="row">
-        <div class="row-label">Price per sqft<small class="row-sub">Before tax</small></div>
+        <div class="row-label">Price per sqft<small class="row-sub">Suggested, always editable</small></div>
         <span style="font-size:13px;color:#b8965a;margin-right:-4px;flex-shrink:0">$</span>
         <input id="q-ppsf" type="number" inputmode="decimal" placeholder="0.00">
         <span class="row-unit">/ ft²</span>
@@ -409,9 +424,11 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
           <div class="row-label">Delivery fee<small class="row-sub">Per slab</small></div>
           <div class="toggle-wrap" id="q-del-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
         </div>
-        <div class="fee-row hidden" id="q-fee-row">
-          <button class="fee-chip active" id="fee-50">$50 / slab</button>
-          <button class="fee-chip" id="fee-75">$75 / slab</button>
+        <div class="fee-row hidden" id="q-fee-row" style="align-items:center">
+          <div class="row-label" style="flex:1">Fee per slab</div>
+          <span style="font-size:13px;color:#b8965a;margin-right:-4px;flex-shrink:0">$</span>
+          <input id="q-del-fee" type="number" inputmode="decimal" placeholder="50" value="50">
+          <span class="row-unit">/ slab</span>
         </div>
       </div>
       <div class="row">
@@ -607,6 +624,39 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
    Type  slabFiles()  in the browser console to print the full list.
    ═══════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════
+   ▼▼▼  LIST PRICES BY GROUP  ▼▼▼
+
+   Two numbers per group: single and bundle, in $ per sqft.
+   These are the 3CM prices — thinner material is discounted below.
+
+   Pickup   -> bundle price.
+   Delivery -> single price.
+   Quantity does not affect this. The rep can always override the
+   rate chips, and the price field is always editable.
+   ═══════════════════════════════════════════════════════════════ */
+
+const GROUP_PRICES = {
+  0: { single:12.95, bundle:10.85 },
+  1: { single:14.95, bundle:12.65 },
+  2: { single:16.85, bundle:13.65 },
+  3: { single:18.85, bundle:15.65 },
+  4: { single:20.85, bundle:17.65 },
+  5: { single:24.85, bundle:20.65 },
+  6: { single:26.85, bundle:21.65 },
+  7: { single:31.85, bundle:26.65 },
+  8: { single:33.85, bundle:28.65 },
+};
+
+/* thickness discount off the 3CM list price, $ per sqft */
+const THICK_ADJUST = {
+  '3CM':    0,
+  '2CM':   -1,
+  '1.5CM': -2,
+};
+
+/* ▲▲▲  END OF PRICE TABLE  ▲▲▲ */
+
 const QUARTZ_COLORS = [
   /* Group 0 */
   { n:"Arva White",         g:0, c:["SJ:2CM","SJ:3CM","STD:1.5CM"] },
@@ -723,7 +773,6 @@ let qMat      = 'quartz';
 let qStyle    = 'SJ';
 let qTax      = false;
 let qDel      = false;
-let qDelFee   = 50;
 let qTxn      = false;
 let rMat      = 'quartz';
 let rStyle    = 'SJ';
@@ -736,7 +785,11 @@ let soArchive = load('sbpSOArchive') || [];
 let qFinish   = 'Polished';
 let qThick    = '3CM';
 let qStockOn  = false;
-let qStockColor = null;
+let qStockColor  = null;
+let qFul         = 'delivery';
+let qRate        = 'single';
+let qRateManual  = false;
+let qPriceEdited = false;
 
 /* ── Toast ── */
 let toastTimer;
@@ -782,18 +835,7 @@ makeToggle('q-del-toggle', v=>{
 });
 makeToggle('q-txn-toggle', v=>{ qTxn=v; calcQuote(); });
 
-$('fee-50').addEventListener('click',()=>{
-  qDelFee=50;
-  $('fee-50').classList.add('active');
-  $('fee-75').classList.remove('active');
-  calcQuote();
-});
-$('fee-75').addEventListener('click',()=>{
-  qDelFee=75;
-  $('fee-75').classList.add('active');
-  $('fee-50').classList.remove('active');
-  calcQuote();
-});
+$('q-del-fee').addEventListener('input', calcQuote);
 
 /* ── Quote material ── */
 document.querySelectorAll('#panel-quote .mat-card').forEach(btn=>{
@@ -811,7 +853,7 @@ document.querySelectorAll('#panel-quote .mat-card').forEach(btn=>{
     refreshThickness();
     refreshNotes();
     refreshStock();
-    calcQuote();
+    applyListPrice();
   });
 });
 
@@ -829,9 +871,11 @@ document.querySelectorAll('#q-quartz-section .style-card').forEach(btn=>{
 });
 
 /* ── Quote inputs ── */
-['q-ppsf','q-qty','q-length','q-width'].forEach(id=>{
-  $(id).addEventListener('input', calcQuote);
+$('q-ppsf').addEventListener('input', ()=>{
+  qPriceEdited = true;
+  applyListPrice();
 });
+['q-qty','q-length','q-width'].forEach(id=>$(id).addEventListener('input', calcQuote));
 
 /* ── Reverse toggles ── */
 makeToggle('r-tax-toggle', v=>{ rTaxInc=v; calcReverse(); });
@@ -885,7 +929,8 @@ function calcQuote(){
   const preTax    = areaTotal*ppsf;
   const taxAmt    = qTax ? preTax*0.08 : 0;
   const withTax   = preTax+taxAmt;
-  const delAmt    = qDel ? qDelFee*qty : 0;
+  const delFee    = parseFloat($('q-del-fee').value)||0;
+  const delAmt    = qDel ? delFee*qty : 0;
   const withDel   = withTax+delAmt;
   const txnAmt    = qTxn ? withDel*0.02 : 0;
   const grand     = withDel+txnAmt;
@@ -976,7 +1021,7 @@ function renderNetFinal(){
 
   $('nf-items').innerHTML = netItems.map(item=>{
     const lineTotal = in2ft2(item.l,item.h)*item.qty*item.ppsf;
-    const spec = [item.finish, item.thick].filter(Boolean).join(' · ');
+    const spec = [item.finish, item.thick, item.rate?(item.rate==='bundle'?'Bundle':'Single'):''].filter(Boolean).join(' · ');
     return `<div class="net-item" data-id="${item.id}">
       <div style="display:flex;gap:10px;align-items:center">
         ${item.photo?`<img src="${item.photo}" style="width:44px;height:32px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#f5f0eb" onerror="if(this.src.endsWith('.jpg')){this.src=this.src.replace(/\\.jpg$/,'.png')}else{this.style.display='none'}">`:''}
@@ -1163,6 +1208,8 @@ document.querySelectorAll('#q-thick-row .fee-chip').forEach(btn=>{
     document.querySelectorAll('#q-thick-row .fee-chip').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     refreshNotes();
+    qPriceEdited = false;
+    if(typeof applyListPrice==='function') applyListPrice();
   });
 });
 function setThick(t){
@@ -1248,10 +1295,12 @@ $('q-color-list').addEventListener('click', e=>{
   applyColorDefaults(c);
   refreshNotes();
   refreshStock();
+  qPriceEdited = false;
+  applyListPrice();
 });
 
 $('q-color').addEventListener('input', ()=>{
-  renderColorList(); refreshThickness(); refreshNotes(); refreshStock();
+  renderColorList(); refreshThickness(); refreshNotes(); refreshStock(); applyListPrice();
 });
 $('q-color').addEventListener('focus', renderColorList);
 document.addEventListener('click', e=>{
@@ -1317,6 +1366,75 @@ function absUrl(p){
   return new URL(p, window.location.href).href;
 }
 
+/* ── Pricing: order type + rate ── */
+
+/* pickup -> bundle, delivery -> single. Quantity is irrelevant. */
+function autoRate(){ return qFul==='pickup' ? 'bundle' : 'single'; }
+
+function setFul(f){
+  qFul = f;
+  document.querySelectorAll('#q-ful-row .fee-chip').forEach(b=>b.classList.toggle('active', b.dataset.ful===f));
+  qRateManual = false;          // order type re-decides the rate
+  qPriceEdited = false;         // and re-suggests the price
+  applyListPrice();
+}
+function setRate(r){
+  qRate = r;
+  document.querySelectorAll('#q-rate-row .fee-chip').forEach(b=>b.classList.toggle('active', b.dataset.rate===r));
+}
+
+document.querySelectorAll('#q-ful-row .fee-chip').forEach(btn=>{
+  btn.addEventListener('click',()=>setFul(btn.dataset.ful));
+});
+document.querySelectorAll('#q-rate-row .fee-chip').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    qRateManual  = true;
+    qPriceEdited = false;       // switching rate re-suggests the price
+    setRate(btn.dataset.rate);
+    applyListPrice();
+  });
+});
+
+/* the suggested list price for the current color + rate + thickness */
+function suggestedPrice(){
+  const c = qMat==='quartz' ? findQuartzColor($('q-color').value) : null;
+  if(!c) return null;
+  const row = GROUP_PRICES[c.g] || {};
+  const base = row[qRate];
+  if(base === null || base === undefined) return null;
+  const adj = THICK_ADJUST[qThick] || 0;
+  return { val: base + adj, base, adj, group:c.g };
+}
+
+function applyListPrice(){
+  const note = $('q-rate-note');
+  if(!qRateManual) setRate(autoRate());
+
+  const s = suggestedPrice();
+
+  /* fill the field unless the rep has typed their own number */
+  if(s && !qPriceEdited) $('q-ppsf').value = s.val.toFixed(2);
+
+  const rateLabel = qRate==='bundle' ? 'Bundle' : 'Single';
+  const why = qRateManual ? 'manual' : qFul;
+
+  if(!s){
+    note.textContent = qMat==='quartz'
+      ? `${rateLabel} · ${why} · no list price saved — enter manually`
+      : `${rateLabel} · ${why} · natural stone is priced manually`;
+    note.style.color = '#8a8078';
+  } else if(qPriceEdited){
+    note.textContent = `${rateLabel} · ${why} · custom price (list is $${s.val.toFixed(2)})`;
+    note.style.color = '#a3752d';
+  } else {
+    const adjTxt = s.adj ? ` (3CM $${s.base.toFixed(2)} ${s.adj}/ft² for ${qThick})` : '';
+    note.textContent = `Group ${s.group} · ${rateLabel} · ${why} · list $${s.val.toFixed(2)}/ft²${adjTxt}`;
+    note.style.color = '#8a8078';
+  }
+  note.classList.remove('hidden');
+  calcQuote();
+}
+
 /* ── Add to Net Final ── */
 $('q-add-net').addEventListener('click',()=>{
   const {l,h} = getQDims();
@@ -1340,7 +1458,7 @@ $('q-add-net').addEventListener('click',()=>{
     save('sbpCurrentSO', currentSO);
   }
   netItems.push({id:Date.now(), color, dimLabel, lot, photo, photo2,
-                 finish:qFinish, thick:qThick,
+                 finish:qFinish, thick:qThick, rate:qRate, ful:qFul,
                  l, h, qty:parseInt($('q-qty').value)||1, ppsf});
   save('sbpNF', netItems);
   updateNFClientHeader();
@@ -1412,11 +1530,15 @@ $('q-reset').addEventListener('click',()=>{
   $('q-color-list').classList.add('hidden');
   qFinish='Polished'; setFinish('Polished');
   qThick='3CM'; setThick('3CM');
+  qRateManual=false; qPriceEdited=false;
+  $('q-ppsf').readOnly=false; $('q-ppsf').style.opacity='1';
+  setFul('delivery');
   refreshThickness();
   refreshNotes();
   $('q-ppsf').value='';$('q-qty').value='1';$('q-notes').value='';
   if(qTax){qTax=false;$('q-tax-toggle').classList.remove('on');}
   if(qDel){qDel=false;$('q-del-toggle').classList.remove('on');$('q-fee-row').classList.add('hidden');}
+  $('q-del-fee').value='50';
   if(qTxn){qTxn=false;$('q-txn-toggle').classList.remove('on');}
   $('q-result').classList.add('hidden');
   showToast('Cleared');
@@ -1441,7 +1563,7 @@ $('nf-email').addEventListener('click',()=>{
     lines.push(
       `   Dimensions : ${item.dimLabel}`,
       `   Quantity   : ${item.qty} slab${item.qty>1?'s':''}`,
-      `   Price/ft²  : $${item.ppsf.toFixed(2)}`,
+      `   Price/ft²  : $${item.ppsf.toFixed(2)}${item.rate?' ('+item.rate+(item.ful?', '+item.ful:'')+')':''}`,
       `   Line total : ${money(lt)}`);
     if(item.photo)  lines.push(`   Slab photo : ${item.photo}`);
     if(item.photo2) lines.push(`   Close-up   : ${item.photo2}`);
@@ -1574,7 +1696,7 @@ function resendOrder(soNum){
     lines.push(
       `   Dimensions : ${item.dimLabel}`,
       `   Quantity   : ${item.qty} slab${item.qty>1?'s':''}`,
-      `   Price/ft²  : $${item.ppsf.toFixed(2)}`,
+      `   Price/ft²  : $${item.ppsf.toFixed(2)}${item.rate?' ('+item.rate+(item.ful?', '+item.ful:'')+')':''}`,
       `   Line total : ${money(lt)}`);
     if(item.photo)  lines.push(`   Slab photo : ${item.photo}`);
     if(item.photo2) lines.push(`   Close-up   : ${item.photo2}`);
@@ -1611,6 +1733,7 @@ $('q-photo-wrap').classList.toggle('hidden', qMat!=='natural');
 $('q-stock-wrap').classList.toggle('hidden', qMat!=='quartz');
 $('q-color').placeholder = qMat==='quartz' ? 'Type or pick a color…' : 'e.g. Taj Mahal';
 refreshThickness();
+setFul('delivery');
 renderHistory();
 renderNetFinal();
 updateNFClientHeader();
