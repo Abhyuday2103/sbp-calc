@@ -416,7 +416,7 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
     <div class="sl">Extras &amp; fees</div>
     <div class="card">
       <div class="row">
-        <div class="row-label">Tax applicable<small class="row-sub">8% sales tax</small></div>
+        <div class="row-label">Tax applicable<small class="row-sub">8.25% sales tax</small></div>
         <div class="toggle-wrap" id="q-tax-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
       </div>
       <div class="row" id="q-delivery-row" style="flex-wrap:wrap">
@@ -510,7 +510,7 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
         <input id="r-price" type="number" inputmode="decimal" placeholder="0.00">
       </div>
       <div class="row">
-        <div class="row-label">Price includes tax?<small class="row-sub">8% will be backed out</small></div>
+        <div class="row-label">Price includes tax?<small class="row-sub">8.25% will be backed out</small></div>
         <div class="toggle-wrap" id="r-tax-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
       </div>
     </div>
@@ -543,7 +543,7 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
         <div class="so-number" id="nf-so-display">SO # —</div>
       </div>
       <div>
-        <div class="tax-label">Tax (8%)</div>
+        <div class="tax-label">Tax (8.25%)</div>
         <div class="toggle-wrap" id="nf-tax-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
       </div>
     </div>
@@ -570,7 +570,7 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
             <span class="totals-value" id="nf-subtotal">$0.00</span>
           </div>
           <div class="totals-row hidden" id="nf-row-tax">
-            <span class="totals-label">Tax (8%)</span>
+            <span class="totals-label">Tax (8.25%)</span>
             <span class="totals-value" id="nf-tax-amt">$0.00</span>
           </div>
           <div class="totals-row grand">
@@ -637,16 +637,21 @@ textarea:focus{box-shadow:0 0 0 2px #d4b07a}
    ═══════════════════════════════════════════════════════════════ */
 
 const GROUP_PRICES = {
-  0: { single:12.95, bundle:10.85 },
-  1: { single:14.95, bundle:12.65 },
-  2: { single:16.85, bundle:13.65 },
-  3: { single:18.85, bundle:15.65 },
-  4: { single:20.85, bundle:17.65 },
-  5: { single:24.85, bundle:20.65 },
-  6: { single:26.85, bundle:21.65 },
-  7: { single:31.85, bundle:26.65 },
-  8: { single:33.85, bundle:28.65 },
+  /* updated Sep 18, 2026 */
+  0: { single:16.85, bundle:14.65 },
+  1: { single:18.85, bundle:15.65 },
+  2: { single:20.85, bundle:17.65 },
+  3: { single:22.85, bundle:19.65 },
+  4: { single:26.85, bundle:22.65 },
+  5: { single:28.65, bundle:24.65 },
+  6: { single:30.85, bundle:26.65 },
+  7: { single:34.85, bundle:30.65 },
+  8: { single:36.85, bundle:32.65 },
 };
+
+/* sales tax rate — change this one line when the rate moves */
+const TAX_RATE  = 0.0825;
+const TAX_LABEL = '8.25%';
 
 /* thickness discount off the 3CM list price, $ per sqft */
 const THICK_ADJUST = {
@@ -927,7 +932,7 @@ function calcQuote(){
   const areaSlab  = in2ft2(l,h);
   const areaTotal = areaSlab*qty;
   const preTax    = areaTotal*ppsf;
-  const taxAmt    = qTax ? preTax*0.08 : 0;
+  const taxAmt    = qTax ? preTax*TAX_RATE : 0;
   const withTax   = preTax+taxAmt;
   const delFee    = parseFloat($('q-del-fee').value)||0;
   const delAmt    = qDel ? delFee*qty : 0;
@@ -941,7 +946,7 @@ function calcQuote(){
     {l:'Area per slab',        v:sqft(areaSlab),   show:true},
     {l:'Total area',           v:sqft(areaTotal),  show:true},
     {l:'Price before tax',     v:money(preTax),    show:true},
-    {l:'Tax (8%)',             v:money(taxAmt),    show:qTax},
+    {l:`Tax (${TAX_LABEL})`,    v:money(taxAmt),    show:qTax},
     {l:'Price with tax',       v:money(withTax),   show:qTax},
     {l:'Delivery fees',        v:money(delAmt),    show:qDel},
     {l:'Price with delivery',  v:money(withDel),   show:qDel},
@@ -978,7 +983,7 @@ function calcReverse(){
   if(!l||!h||!ps){ $('r-result').classList.add('hidden'); return; }
 
   const area      = in2ft2(l,h);
-  const base      = rTaxInc ? ps/1.08 : ps;
+  const base      = rTaxInc ? ps/(1+TAX_RATE) : ps;
   const taxRemoved= rTaxInc ? ps-base : 0;
   const ppsf      = base/area;
 
@@ -990,7 +995,7 @@ function calcReverse(){
   let html = `
     <div class="rev-row"><span class="rev-row-label">Slab area</span><span class="rev-row-value">${sqft(area)}</span></div>`;
   if(rTaxInc) html += `
-    <div class="rev-row"><span class="rev-row-label">Tax removed (8%)</span><span class="rev-row-value">${money(taxRemoved)}</span></div>`;
+    <div class="rev-row"><span class="rev-row-label">Tax removed (${TAX_LABEL})</span><span class="rev-row-value">${money(taxRemoved)}</span></div>`;
   html += `
     <div class="rev-row"><span class="rev-row-label">Base price (excl. tax)</span><span class="rev-row-value">${money(base)}</span></div>
     <div class="rev-row"><span class="rev-row-label">Price per sqft</span><span class="rev-row-value">${money(ppsf)} / ft²</span></div>`;
@@ -1016,7 +1021,7 @@ function renderNetFinal(){
   if(!hasItems) return;
 
   const sub   = netItems.reduce((s,i)=>s+in2ft2(i.l,i.h)*i.qty*i.ppsf, 0);
-  const taxAmt= nfTax ? sub*0.08 : 0;
+  const taxAmt= nfTax ? sub*TAX_RATE : 0;
   const total = sub+taxAmt;
 
   $('nf-items').innerHTML = netItems.map(item=>{
@@ -1507,7 +1512,7 @@ $('q-copy').addEventListener('click',()=>{
     `Price/sqft: $${$('q-ppsf').value}`,'',
     `Price before tax:   ${money(parseFloat(panel.dataset.preTax))}`,
   ].filter(Boolean);
-  if(qTax){lines.push(`Tax (8%):           ${money(parseFloat(panel.dataset.taxAmt))}`);lines.push(`Price with tax:     ${money(parseFloat(panel.dataset.withTax))}`);}
+  if(qTax){lines.push(`Tax (${TAX_LABEL}):        ${money(parseFloat(panel.dataset.taxAmt))}`);lines.push(`Price with tax:     ${money(parseFloat(panel.dataset.withTax))}`);}
   if(qDel){lines.push(`Delivery:           ${money(parseFloat(panel.dataset.delAmt))}`);lines.push(`With delivery:      ${money(parseFloat(panel.dataset.withDel))}`);}
   if(qTxn) lines.push(`Transaction (2%):   ${money(parseFloat(panel.dataset.txnAmt))}`);
   lines.push('',`GRAND TOTAL:        $${Math.round(parseFloat(panel.dataset.grand)).toLocaleString('en-US')}`);
@@ -1552,7 +1557,7 @@ $('nf-email').addEventListener('click',()=>{
   const date    = $('q-date').value||today();
   const subject = `Sales Order ${currentSO} — ${client} — ${date}`;
   const sub     = netItems.reduce((s,i)=>s+in2ft2(i.l,i.h)*i.qty*i.ppsf,0);
-  const taxAmt  = nfTax?sub*0.08:0;
+  const taxAmt  = nfTax?sub*TAX_RATE:0;
   const total   = sub+taxAmt;
   const lines   = [`SO #: ${currentSO}`,`Client: ${client}`,`Date: ${date}`,``,`SALES ORDER`,`─────────────────────────────────────`];
   netItems.forEach((item,i)=>{
@@ -1569,7 +1574,7 @@ $('nf-email').addEventListener('click',()=>{
     if(item.photo2) lines.push(`   Close-up   : ${item.photo2}`);
   });
   lines.push(``,`─────────────────────────────────────`,`Subtotal (before tax) : ${money(sub)}`);
-  if(nfTax) lines.push(`Tax (8%)              : ${money(taxAmt)}`);
+  if(nfTax) lines.push(`Tax (${TAX_LABEL})           : ${money(taxAmt)}`);
   lines.push(`TOTAL                 : ${money(total)}`,``,`─────────────────────────────────────`,`Sent from SBP Slab Calculator`);
 
   // archive this order for SO Lookup
@@ -1672,7 +1677,7 @@ function renderLookup(filter){
         ${itemsHtml}
         <div class="so-detail-totals">
           <div class="so-detail-row"><span>Subtotal</span><span>${money(o.subtotal)}</span></div>
-          ${o.taxApplied?`<div class="so-detail-row"><span>Tax (8%)</span><span>${money(o.taxAmt)}</span></div>`:''}
+          ${o.taxApplied?`<div class="so-detail-row"><span>Tax (${TAX_LABEL})</span><span>${money(o.taxAmt)}</span></div>`:''}
           <div class="so-detail-row grand"><span>Total</span><span>${money(o.total)}</span></div>
         </div>
         <div class="action-row">
@@ -1702,7 +1707,7 @@ function resendOrder(soNum){
     if(item.photo2) lines.push(`   Close-up   : ${item.photo2}`);
   });
   lines.push(``,`─────────────────────────────────────`,`Subtotal (before tax) : ${money(order.subtotal)}`);
-  if(order.taxApplied) lines.push(`Tax (8%)              : ${money(order.taxAmt)}`);
+  if(order.taxApplied) lines.push(`Tax (${TAX_LABEL})           : ${money(order.taxAmt)}`);
   lines.push(`TOTAL                 : ${money(order.total)}`,``,`─────────────────────────────────────`,`Sent from SBP Slab Calculator`);
   window.location.href=`mailto:Abhi@pacsurfaces.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
   showToast('Opening Mail…');
